@@ -146,7 +146,7 @@ If you use AutoMOOSE in your research, please cite:
 @article{automoose2026,
   title   = {AutoMOOSE: An LLM-Driven Agentic Framework for Automated Phase-Field Simulations},
   author  = {[Authors]},
-  journal = {Nature Machine Intelligence},
+  journal = {NA},
   year    = {2026}
 }
 ```
