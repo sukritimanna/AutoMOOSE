@@ -54,6 +54,5 @@ Verify Installation
 
 .. code-block:: bash
 
-   cd backend
-   export $(grep -v '^#' ../config.env | xargs)
-   python -c "from server import app; print('Backend OK')"
+   export $(grep -v '^#' config.env | xargs)
+   python -c "from automoose.server import app; print('Backend OK')"

@@ -8,7 +8,7 @@ import os
 import importlib.util
 from pathlib import Path
 
-PLUGINS_DIR = Path(__file__).parent.parent / "plugins"
+PLUGINS_DIR = Path(__file__).parent / "plugins"
 _registry: dict = {}
 
 

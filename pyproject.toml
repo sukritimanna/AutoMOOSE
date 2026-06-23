@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "automoose"
+version = "0.2.0"
+description = "An LLM-driven agentic framework for automated MOOSE phase-field simulations"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dynamic = ["dependencies"]
+
+[tool.setuptools.packages.find]
+include = ["automoose*"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }

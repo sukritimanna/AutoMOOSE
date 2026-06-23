@@ -10,17 +10,15 @@ Open three terminal tabs from the ``AutoMOOSE/`` root:
 
 .. code-block:: bash
 
-   cd backend
-   export $(grep -v '^#' ../config.env | xargs)
-   uvicorn server:app --host 0.0.0.0 --port 8000
+   export $(grep -v '^#' config.env | xargs)
+   uvicorn automoose.server:app --host 0.0.0.0 --port 8000
 
 **Terminal 2 — MCP server (port 8001):**
 
 .. code-block:: bash
 
-   cd backend
-   export $(grep -v '^#' ../config.env | xargs)
-   uvicorn mcp_server:app --host 0.0.0.0 --port 8001
+   export $(grep -v '^#' config.env | xargs)
+   uvicorn automoose.mcp_server:app --host 0.0.0.0 --port 8001
 
 **Terminal 3 — Frontend (port 5174):**
 

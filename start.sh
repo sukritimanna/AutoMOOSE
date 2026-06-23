@@ -22,7 +22,7 @@ echo "Ctrl+C to stop both."
 echo ""
 
 conda activate moose 2>/dev/null || true
-cd backend && uvicorn server:app --port 8000 &
+uvicorn automoose.server:app --port 8000 &
 BACKEND_PID=$!
 cd ..
 sleep 2

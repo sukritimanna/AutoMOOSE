@@ -2,7 +2,7 @@
   "mcpServers": {
     "automoose": {
       "command": "python",
-      "args": ["/path/to/AutoMOOSE/backend/mcp_server.py"],
+      "args": ["/path/to/AutoMOOSE/automoose/mcp_server.py"],
       "env": {
         "AUTOMOOSE_URL": "http://localhost:8000",
         "ANTHROPIC_API_KEY": "your-key-here"
