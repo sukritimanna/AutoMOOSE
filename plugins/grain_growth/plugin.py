@@ -50,7 +50,7 @@ PLUGIN = {
         "preconditioner":     "asm",    # asm | hypre_boomeramg
         "nl_max_its":         20,
         "nl_rel_tol":         1e-8,
-        "nl_abs_tol":         1e-11,
+        "nl_abs_tol":         1e-8,
         "l_max_its":          30,
         "l_tol":              1e-4,
         "optimal_iterations": 8,
@@ -59,7 +59,7 @@ PLUGIN = {
         "end_time":   4000.0,
         "num_steps":  500,
         "dt_start":   25.0,
-        "dt_cutback": 0.9,
+        "dt_cutback": 0.5,
         "dt_growth":  1.1,
         # Mesh adaptivity
         "use_adaptivity":     True,
@@ -280,11 +280,11 @@ def generate_input(
     # LinearizedInterface
     gbmob=100.0, gbenergy_li=6.0, gbwidth_li=10.0, gamma_asymm=1.5, bound_value=5.0,
     # Solver
-    preconditioner="asm", nl_max_its=20, nl_rel_tol=1e-8, nl_abs_tol=1e-11,
+    preconditioner="asm", nl_max_its=20, nl_rel_tol=1e-8, nl_abs_tol=1e-8,
     l_max_its=30, l_tol=1e-4, optimal_iterations=8,
     # Time
     time_mode="end_time", end_time=4000.0, num_steps=500, dt_start=25.0,
-    dt_cutback=0.9, dt_growth=1.1,
+    dt_cutback=0.5, dt_growth=1.1,
     # Adaptivity
     use_adaptivity=True, initial_adaptivity=2,
     refine_fraction=0.7, coarsen_fraction=0.1, max_h_level=4,
