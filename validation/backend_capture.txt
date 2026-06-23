@@ -1,0 +1,13 @@
+
+=== Backend capability capture ===
+Backend                            Status      in   out   tot    sec
+----------------------------------------------------------------------
+Claude (closed)                    OK          34    46    80   4.84
+Qwen2.5-32B (open, Perlmutter)     OK          37    33    70   1.73
+
+[Claude (closed)]
+  Grain growth is the process by which larger grains in a polycrystalline material grow at the expense of smaller grains, driven by the reduction of grain boundary energy, typically occurring at elevated temperatures.
+
+[Qwen2.5-32B (open, Perlmutter)]
+  Grain growth is the process by which the average grain size in a polycrystalline material increases over time due to the movement of grain boundaries.
+
