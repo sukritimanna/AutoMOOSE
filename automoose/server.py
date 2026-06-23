@@ -15,6 +15,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent))
 sys.path.insert(0, str(Path(__file__).parent.parent))
 import plugin_registry as registry
+from automoose.llm import get_client
 
 app = FastAPI(title="AutoMOOSE", version="2.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"],
@@ -121,14 +122,11 @@ Total timesteps: {metrics.get('total_timesteps', '?')}
 Final time: {metrics.get('final_time', '?')} ns"""
 
     try:
-        client   = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
-        response = client.messages.create(
-            model      = "claude-sonnet-4-20250514",
-            max_tokens = 400,
-            system     = system_prompt,
-            messages   = [{"role": "user", "content": user_msg}],
+        narrative = get_client().complete(
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_msg}],
+            max_tokens=400,
         )
-        narrative = response.content[0].text
         _runs[run_id]["narrative"] = narrative
         _save(run_id)
         print(f"[{run_id}] Narrative generated ({len(narrative)} chars)")
@@ -409,13 +407,11 @@ async def chat(req: ChatRequest):
     messages.append({"role": "user",
         "content": f"[Context]\n{context}\n\n[Message]\n{req.message}"})
 
-    client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
+    llm = get_client()
 
     async def generate():
-        with client.messages.stream(model="claude-sonnet-4-20250514",
-                max_tokens=1500, system=system, messages=messages) as stream:
-            for chunk in stream.text_stream:
-                yield f"data: {json.dumps({'text': chunk})}\n\n"
+        for chunk in llm.stream(system=system, messages=messages, max_tokens=1500):
+            yield f"data: {json.dumps({'text': chunk})}\n\n"
         yield f"data: {json.dumps({'done': True})}\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")
