@@ -1,0 +1,3 @@
+T=800 grain_growth diverges (DIVERGED_ITS); T=450 converges. Skeptic/Falsifier (W8) test candidate.
+T=800 grain_growth diverges (DIVERGED_ITS); T=450 converges. W8 Skeptic/Falsifier falsification-test candidate.
+T=800 grain_growth diverges (DIVERGED_ITS); T=450 converges. W8 Skeptic/Falsifier falsification-test candidate.

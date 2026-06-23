@@ -50,3 +50,5 @@ Thumbs.db
 Response_TechnicalCheck*
 *Cover_Letter*
 utils/
+config.env.save
+config.env*
