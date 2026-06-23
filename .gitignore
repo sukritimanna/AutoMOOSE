@@ -43,3 +43,9 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Manuscript artifacts (kept outside the repo, in ../AutoMOOSE-paper)
+*.zip
+*.docx
+Response_TechnicalCheck*
+*Cover_Letter*
