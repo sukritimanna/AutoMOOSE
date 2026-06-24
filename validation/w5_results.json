@@ -1,0 +1,186 @@
+{
+  "tasks": [
+    "C1",
+    "C2",
+    "C3",
+    "C4",
+    "C5",
+    "C6",
+    "C7",
+    "C8"
+  ],
+  "models": {
+    "Claude": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "raw_G1_strict": "2/8",
+      "raw_G1_lenient": "5/8",
+      "raw_detail": {
+        "C1": {
+          "strict": true,
+          "lenient": true
+        },
+        "C2": {
+          "strict": false,
+          "lenient": true
+        },
+        "C3": {
+          "strict": false,
+          "lenient": false
+        },
+        "C4": {
+          "strict": false,
+          "lenient": false
+        },
+        "C5": {
+          "strict": false,
+          "lenient": true
+        },
+        "C6": {
+          "strict": true,
+          "lenient": true
+        },
+        "C7": {
+          "strict": false,
+          "lenient": true
+        },
+        "C8": {
+          "strict": false,
+          "lenient": false
+        }
+      }
+    },
+    "GPT": {
+      "provider": "openai",
+      "model": "gpt-4o",
+      "raw_G1_strict": "0/8",
+      "raw_G1_lenient": "0/8",
+      "raw_detail": {
+        "C1": {
+          "strict": false,
+          "lenient": false
+        },
+        "C2": {
+          "strict": false,
+          "lenient": false
+        },
+        "C3": {
+          "strict": false,
+          "lenient": false
+        },
+        "C4": {
+          "strict": false,
+          "lenient": false
+        },
+        "C5": {
+          "strict": false,
+          "lenient": false
+        },
+        "C6": {
+          "strict": false,
+          "lenient": false
+        },
+        "C7": {
+          "strict": false,
+          "lenient": false
+        },
+        "C8": {
+          "strict": false,
+          "lenient": false
+        }
+      }
+    }
+  },
+  "per_task": [
+    {
+      "id": "C1",
+      "T": 450,
+      "n": 20,
+      "plugin_strict": true,
+      "plugin_lenient": true,
+      "raw_Claude_strict": true,
+      "raw_Claude_lenient": true,
+      "raw_GPT_strict": false,
+      "raw_GPT_lenient": false
+    },
+    {
+      "id": "C2",
+      "T": 475,
+      "n": 20,
+      "plugin_strict": true,
+      "plugin_lenient": true,
+      "raw_Claude_strict": false,
+      "raw_Claude_lenient": true,
+      "raw_GPT_strict": false,
+      "raw_GPT_lenient": false
+    },
+    {
+      "id": "C3",
+      "T": 500,
+      "n": 50,
+      "plugin_strict": true,
+      "plugin_lenient": true,
+      "raw_Claude_strict": false,
+      "raw_Claude_lenient": false,
+      "raw_GPT_strict": false,
+      "raw_GPT_lenient": false
+    },
+    {
+      "id": "C4",
+      "T": 525,
+      "n": 50,
+      "plugin_strict": true,
+      "plugin_lenient": true,
+      "raw_Claude_strict": false,
+      "raw_Claude_lenient": false,
+      "raw_GPT_strict": false,
+      "raw_GPT_lenient": false
+    },
+    {
+      "id": "C5",
+      "T": 550,
+      "n": 50,
+      "plugin_strict": true,
+      "plugin_lenient": true,
+      "raw_Claude_strict": false,
+      "raw_Claude_lenient": true,
+      "raw_GPT_strict": false,
+      "raw_GPT_lenient": false
+    },
+    {
+      "id": "C6",
+      "T": 500,
+      "n": 100,
+      "plugin_strict": true,
+      "plugin_lenient": true,
+      "raw_Claude_strict": true,
+      "raw_Claude_lenient": true,
+      "raw_GPT_strict": false,
+      "raw_GPT_lenient": false
+    },
+    {
+      "id": "C7",
+      "T": 450,
+      "n": 100,
+      "plugin_strict": true,
+      "plugin_lenient": true,
+      "raw_Claude_strict": false,
+      "raw_Claude_lenient": true,
+      "raw_GPT_strict": false,
+      "raw_GPT_lenient": false
+    },
+    {
+      "id": "C8",
+      "T": 525,
+      "n": 100,
+      "plugin_strict": true,
+      "plugin_lenient": true,
+      "raw_Claude_strict": false,
+      "raw_Claude_lenient": false,
+      "raw_GPT_strict": false,
+      "raw_GPT_lenient": false
+    }
+  ],
+  "plugin_G1_strict": "8/8",
+  "plugin_G1_lenient": "8/8"
+}

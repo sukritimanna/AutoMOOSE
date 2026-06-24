@@ -1,0 +1,16 @@
+%% Auto-generated from validation/w5_results.json -- do not hand-edit numbers.
+\begin{table}[t]
+\centering\small
+\caption{Ablation and baseline comparison on $n{=}8$ core grain-growth tasks, scored on G1 (input validity via \texttt{--check-input}). \emph{AutoMOOSE} is the deterministic plugin; \emph{raw} conditions prompt the bare model with the same task and no plugin scaffolding. \emph{Strict} requires a clean parse; \emph{lenient} (\texttt{--allow-unused}) ignores deprecated-but-harmless parameters, matching the checking applied to AutoMOOSE's own benchmark runs.}
+\label{tab:w5_ablation}
+\begin{tabular}{lcc}
+\toprule
+Condition & G1 strict & G1 lenient\\
+\midrule
+AutoMOOSE plugin & \textbf{8/8} & \textbf{8/8}\\
+\midrule
+raw Claude (claude-sonnet-4-6) & 2/8 & 5/8\\
+raw GPT (gpt-4o) & 0/8 & 0/8\\
+\bottomrule
+\end{tabular}
+\end{table}
