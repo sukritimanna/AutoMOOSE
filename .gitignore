@@ -52,3 +52,5 @@ Response_TechnicalCheck*
 utils/
 config.env.save
 config.env*
+.jitcache/
+staging_prod/
