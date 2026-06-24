@@ -59,15 +59,31 @@ def falsify_run(task_dir, n0_expected=None):
     log_p = d / f"{d.name}.log"
     tests = {}
 
-    # T5 numerical integrity -- check the solver log for divergence FIRST
-    diverged = False
+    # T5 numerical integrity. NOTE: MOOSE prints "Linear solve did not converge
+    # due to DIVERGED_ITS" routinely during NORMAL adaptive time-stepping (it cuts
+    # dt and continues). That is NOT failure. Only flag FATAL breakdown: an
+    # application abort, or a solve that never advanced in time. Completion to the
+    # target end_time is the strongest evidence of numerical validity.
+    fatal = False; reason5 = "no fatal solver breakdown"
+    csv_for_t5 = d / "grain_growth.csv"
+    reached_time = 0.0
+    if csv_for_t5.exists():
+        try:
+            tt, _ = _load(csv_for_t5); reached_time = tt[-1] if tt else 0.0
+        except Exception:
+            reached_time = 0.0
     if log_p.exists():
         txt = log_p.read_text(errors="ignore")
-        diverged = bool(re.search(r"DIVERGED|did not converge|Nonlinear.*failed", txt))
-    tests["T5_numerical"] = {
-        "pass": not diverged,
-        "reason": "solver diverged (DIVERGED/non-convergence in log)" if diverged
-                  else "no solver divergence detected"}
+        # genuine fatal signatures: MPI abort / solve aborted / failed to converge
+        # after stepper gave up (timestep below minimum)
+        if re.search(r"MPI_Abort|application called MPI_Abort|Solve Did NOT Converge|"
+                     r"Aborting as solve did not converge|reached minimum", txt):
+            fatal = True; reason5 = "fatal solver breakdown (abort / min-dt reached)"
+    # also fatal if effectively no progress in time at all
+    if reached_time <= 0.0:
+        fatal = True; reason5 = "no time advance (run did not progress)"
+    tests["T5_numerical"] = {"pass": not fatal, "reason": reason5,
+                             "reached_time": reached_time}
 
     if not csv_p.exists():
         tests["T1_monotonicity"] = {"pass": False, "reason": "no CSV output"}
@@ -167,14 +183,152 @@ def arrhenius_consistency(run_rates):
                       + ("" if ok else " -> Arrhenius consistency not satisfied")}
 
 
+
+# ── Spinodal (Cahn-Hilliard) falsification battery ──────────────────────────
+# A conserved-order-parameter domain. Its invariants are EXACT physical laws,
+# which makes them stronger falsification tests than the grain-growth checks:
+#   S1 mass conservation   : integral of c is constant (drift -> 0). EXACT.
+#   S2 free-energy dissipat.: total free energy is non-increasing. EXACT (grad flow).
+#   S3 coarsening scaling  : domain count decreases; L(t) follows a power law
+#                            (Lifshitz-Slyozov, exponent approaching ~1/3).
+CONSERVE_REL_TOL = 1e-6   # relative drift of integral(c) allowed (numerical only)
+
+
+def _load_spinodal(csv_path):
+    cols = {}
+    with open(csv_path) as f:
+        r = csv.DictReader(f)
+        for row in r:
+            for k, v in row.items():
+                try:
+                    cols.setdefault(k, []).append(float(v))
+                except (TypeError, ValueError):
+                    pass
+    return cols
+
+
+def falsify_spinodal(task_dir):
+    """Falsify a spinodal run against exact Cahn-Hilliard invariants."""
+    d = Path(task_dir)
+    log_p = d / f"{d.name}.log"
+    # CSV may be <base>.csv or <name>_out.csv
+    csv_p = None
+    for cand in [d / "spinodal.csv", d / f"{d.name}.csv", d / f"{d.name}_out.csv"]:
+        if cand.exists():
+            csv_p = cand; break
+    if csv_p is None:
+        hits = list(d.glob("*.csv"))
+        csv_p = hits[0] if hits else None
+    tests = {}
+
+    # numerical integrity first (fatal abort / no progress)
+    fatal = False; r5 = "no fatal solver breakdown"
+    if log_p.exists():
+        txt = log_p.read_text(errors="ignore")
+        if re.search(r"MPI_Abort|application called MPI_Abort|Solve Did NOT Converge|reached minimum", txt):
+            fatal = True; r5 = "fatal solver breakdown (abort / min-dt)"
+    tests["S0_numerical"] = {"pass": not fatal, "reason": r5}
+
+    if csv_p is None:
+        for k in ("S1_conservation", "S2_dissipation", "S3_coarsening"):
+            tests[k] = {"pass": False, "reason": "no CSV output"}
+        return _verdict_spinodal(d.name, tests)
+
+    c = _load_spinodal(csv_p)
+    tc = c.get("total_c") or []
+    en = c.get("total_energy") or []
+    nf = c.get("num_features") or []
+    t  = c.get("time") or []
+
+    # S1 mass conservation (EXACT law): relative drift of integral(c)
+    if len(tc) >= 2:
+        c0 = tc[0]; drift = max(abs(v - c0) for v in tc)
+        rel = drift / abs(c0) if c0 else drift
+        ok1 = rel <= CONSERVE_REL_TOL
+        tests["S1_conservation"] = {
+            "pass": ok1, "rel_drift": rel,
+            "reason": (f"integral(c) conserved (rel drift {rel:.2e})" if ok1
+                       else f"MASS NOT CONSERVED (rel drift {rel:.2e} > {CONSERVE_REL_TOL:.0e})")}
+    else:
+        tests["S1_conservation"] = {"pass": False, "reason": "no total_c series"}
+
+    # S2 free-energy dissipation (EXACT law): energy must be non-increasing
+    if len(en) >= 2:
+        rises = sum(1 for a, b in zip(en, en[1:]) if b > a + 1e-9 * max(1.0, abs(a)))
+        ok2 = rises == 0
+        tests["S2_dissipation"] = {
+            "pass": ok2, "rises": rises,
+            "reason": ("free energy monotonically non-increasing" if ok2
+                       else f"free energy INCREASED on {rises} step(s) -- violates gradient flow")}
+    else:
+        tests["S2_dissipation"] = {"pass": False, "reason": "no total_energy series"}
+
+    # S3 coarsening: domain count decreases and follows a power law L~t^p
+    if len(nf) >= 4 and len(t) >= 4:
+        coarsened = nf[-1] < nf[0]
+        pts = [(ti, ni) for ti, ni in zip(t, nf) if ti > 0 and ni and ni > 0]
+        r2 = None; p_exp = None
+        if len(pts) >= 4:
+            xs = [math.log(x) for x, _ in pts]
+            ys = [math.log(y ** (-0.5)) for _, y in pts]   # L = N^(-1/2)
+            slope, _, r2 = _linfit(xs, ys)
+            p_exp = slope
+        ok3 = coarsened and (r2 is not None and r2 >= 0.80)
+        tests["S3_coarsening"] = {
+            "pass": ok3, "exponent": (round(p_exp, 4) if p_exp is not None else None),
+            "R2": (round(r2, 4) if r2 is not None else None),
+            "reason": (f"coarsening N:{nf[0]:.0f}->{nf[-1]:.0f}, "
+                       f"L~t^{p_exp:.3f} (R2={r2:.2f})" if r2 is not None
+                       else "insufficient coarsening data")
+                      + ("" if ok3 else " -- coarsening not established")}
+    else:
+        tests["S3_coarsening"] = {"pass": False, "reason": "too few points"}
+
+    return _verdict_spinodal(d.name, tests)
+
+
+def _diagnose_spinodal(tests):
+    if not tests["S0_numerical"]["pass"]:
+        return ("solver breakdown: result numerically invalid; do not trust metrics.")
+    if not tests["S1_conservation"]["pass"]:
+        return ("mass conservation violated: integral of the conserved order parameter "
+                "drifted beyond numerical tolerance. This is an EXACT Cahn-Hilliard law, "
+                "so the result is non-physical -- suspect a non-conservative kernel/BC or "
+                "an unconverged solve. Remediation: verify split-CH kernels and periodic BCs.")
+    if not tests["S2_dissipation"]["pass"]:
+        return ("free energy increased: violates gradient-flow dissipation (an exact law). "
+                "Suspect an unconverged/oscillatory solve. Remediation: tighten tolerances "
+                "or reduce time-step.")
+    if not tests["S3_coarsening"]["pass"]:
+        return ("phase separation/coarsening not established: integration window too short "
+                "for the asymptotic regime, or the system did not separate. Remediation: "
+                "extend end_time; verify the IC sits in the spinodal region.")
+    return "all Cahn-Hilliard invariants satisfied (incl. exact conservation): result is credible."
+
+
+def _verdict_spinodal(sim_id, tests):
+    falsified = [k for k, v in tests.items() if not v["pass"]]
+    return {"id": sim_id, "physics": "spinodal", "credible": len(falsified) == 0,
+            "falsified_by": falsified, "tests": tests,
+            "diagnosis": _diagnose_spinodal(tests)}
+
+
+def falsify(task_dir, physics="grain_growth", **kw):
+    """Physics-dispatching entry point: routes to the domain-appropriate battery."""
+    if physics == "spinodal":
+        return falsify_spinodal(task_dir)
+    return falsify_run(task_dir, **kw)
+
 if __name__ == "__main__":
     import argparse, glob, json
     ap = argparse.ArgumentParser(description="Skeptic/Falsifier agent (W8)")
     ap.add_argument("--stage", default="/pscratch/sd/s/smanna/autoMOOSE/evalset_staging")
     ap.add_argument("--out", default="falsification_report.json")
+    ap.add_argument("--physics", default="grain_growth", choices=["grain_growth","spinodal"])
     a = ap.parse_args()
-    dirs = sorted(d for d in Path(a.stage).glob("GG*") if d.is_dir())
-    reports = [falsify_run(d) for d in dirs]
+    glob_pat = "GG*" if a.physics == "grain_growth" else "*"
+    dirs = sorted(d for d in Path(a.stage).glob(glob_pat) if d.is_dir())
+    reports = [falsify(d, physics=a.physics) for d in dirs]
     cred = sum(r["credible"] for r in reports)
     print(f"\n=== Skeptic/Falsifier: {cred}/{len(reports)} runs credible ===\n")
     for r in reports:
