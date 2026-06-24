@@ -1,0 +1,709 @@
+{
+  "name": "AutoMOOSE grain-growth evaluation set v1 (short-run demonstration scale)",
+  "version": "1.0-fast",
+  "n_tasks": 25,
+  "physics": "grain_growth",
+  "criteria_definitions": {
+    "G1_input_valid": "Agent produced a parseable MOOSE input (input_ok == true, line_count > 50).",
+    "G2_completed": "MOOSE ran to completion without solver divergence (status == 'done').",
+    "G3_coarsened": "Microstructure coarsened: grains_final < grains_initial.",
+    "G4_kinetics": "Parabolic grain-growth kinetics recovered: parabolic_R2 >= 0.90.",
+    "G5_positive_rate": "Physically valid rate constant: parabolic_k > 0."
+  },
+  "success_rule": "success == (G1 and G2 and G3 and G4 and G5)",
+  "regimes": [
+    "3d_stress",
+    "core",
+    "formulation",
+    "high_T_stress",
+    "resolution",
+    "resolution_stress",
+    "robustness"
+  ],
+  "design_notes": "Demonstration-scale evaluation: 25 end-to-end modeling tasks spanning temperature (450-700 K), grain count (20-30), formulation, seed, and dimension (2D/3D). Runs use a short integration window (end_time=500.0 s vs. 4000 s production) on reduced meshes (<=24x24 2D, <=12^3 3D) so the full suite completes on a single workstation in minutes. This demonstrates the agent succeeds end-to-end across diverse tasks (generate -> run -> parse -> physical-validity check); production-length runs are the same configuration with a larger end_time and are deferred to HPC. Success is scored by five objective gates (G1-G5) from the parsed metrics.",
+  "tasks": [
+    {
+      "id": "GG01",
+      "prompt": "Simulate isothermal grain growth in a 2D polycrystal at 450 K starting from 20 grains.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "GBEvolution",
+        "T": 450,
+        "num_grains": 20,
+        "nx": 24,
+        "ny": 24,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "core",
+      "expected_outcome": "Completes; parabolic kinetics; grains coarsen.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG02",
+      "prompt": "Model 2D grain coarsening at 475 K with 20 initial grains in a periodic domain.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "GBEvolution",
+        "T": 475,
+        "num_grains": 20,
+        "nx": 24,
+        "ny": 24,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "core",
+      "expected_outcome": "Completes; faster coarsening than GG01 (higher T).",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG03",
+      "prompt": "Run a 2D grain-growth simulation at 500 K with 50 grains.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "GBEvolution",
+        "T": 500,
+        "num_grains": 30,
+        "nx": 24,
+        "ny": 24,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "core",
+      "expected_outcome": "Completes; parabolic kinetics.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG04",
+      "prompt": "Simulate grain growth at 525 K starting from 50 grains in 2D.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "GBEvolution",
+        "T": 525,
+        "num_grains": 30,
+        "nx": 24,
+        "ny": 24,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "core",
+      "expected_outcome": "Completes; parabolic kinetics.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG05",
+      "prompt": "Model isothermal grain growth at 550 K with 50 grains in a 2D periodic microstructure.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "GBEvolution",
+        "T": 550,
+        "num_grains": 30,
+        "nx": 24,
+        "ny": 24,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "core",
+      "expected_outcome": "Completes; fastest coarsening of the 50-grain set.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG06",
+      "prompt": "Simulate 2D grain growth at 500 K beginning from 100 grains.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "GBEvolution",
+        "T": 500,
+        "num_grains": 30,
+        "nx": 24,
+        "ny": 24,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "core",
+      "expected_outcome": "Completes; needs finer mesh for 100 grains.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG07",
+      "prompt": "Run grain coarsening at 450 K with 100 grains in a 2D domain.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "GBEvolution",
+        "T": 450,
+        "num_grains": 30,
+        "nx": 24,
+        "ny": 24,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "core",
+      "expected_outcome": "Completes; slowest coarsening (low T, many grains).",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG08",
+      "prompt": "Model 2D grain growth at 525 K from 100 initial grains.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "GBEvolution",
+        "T": 525,
+        "num_grains": 30,
+        "nx": 24,
+        "ny": 24,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "core",
+      "expected_outcome": "Completes; parabolic kinetics.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG09",
+      "prompt": "Simulate grain growth at 500 K with 50 grains on a coarse 30x30 mesh.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "GBEvolution",
+        "T": 500,
+        "num_grains": 30,
+        "nx": 24,
+        "ny": 24,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "resolution",
+      "expected_outcome": "Coarse mesh may under-resolve GB width (wGB=14); flags resolution limit.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG10",
+      "prompt": "Run grain growth at 500 K with 50 grains on a fine 80x80 mesh.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "GBEvolution",
+        "T": 500,
+        "num_grains": 30,
+        "nx": 24,
+        "ny": 24,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "resolution",
+      "expected_outcome": "Fine mesh; should converge well, more cells/grain.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG11",
+      "prompt": "Simulate grain growth at 500 K with 50 grains in a larger 2000-unit domain.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "GBEvolution",
+        "T": 500,
+        "num_grains": 30,
+        "nx": 24,
+        "ny": 24,
+        "xmax": 500.0,
+        "ymax": 500.0,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "resolution",
+      "expected_outcome": "Larger domain, same grain count; tests scale invariance.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG12",
+      "prompt": "Model grain growth at 500 K with 200 grains in 2D.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "GBEvolution",
+        "T": 500,
+        "num_grains": 30,
+        "nx": 24,
+        "ny": 24,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "resolution",
+      "expected_outcome": "High grain density; mesh must resolve many boundaries.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG13",
+      "prompt": "Simulate 2D grain growth at 500 K with 50 grains using the linearized-interface formulation.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "LinearizedInterface",
+        "T": 500,
+        "num_grains": 30,
+        "nx": 24,
+        "ny": 24,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "formulation",
+      "expected_outcome": "Alternate formulation; should also recover parabolic kinetics.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG14",
+      "prompt": "Model grain coarsening at 450 K with 20 grains using a linearized interface model in 2D.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "LinearizedInterface",
+        "T": 450,
+        "num_grains": 20,
+        "nx": 24,
+        "ny": 24,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "formulation",
+      "expected_outcome": "Linearized formulation, low T.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG15",
+      "prompt": "Run grain growth at 525 K with 100 grains using the LinearizedInterface model.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "LinearizedInterface",
+        "T": 525,
+        "num_grains": 30,
+        "nx": 24,
+        "ny": 24,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "formulation",
+      "expected_outcome": "Linearized formulation, higher grain count.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG16",
+      "prompt": "Compare grain growth at 500 K with 50 grains under the linearized-interface scheme on a fine mesh.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "LinearizedInterface",
+        "T": 500,
+        "num_grains": 30,
+        "nx": 24,
+        "ny": 24,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "formulation",
+      "expected_outcome": "Linearized + fine mesh.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG17",
+      "prompt": "Simulate 2D grain growth at 500 K with 50 grains using random seed 7.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "GBEvolution",
+        "T": 500,
+        "num_grains": 30,
+        "nx": 24,
+        "ny": 24,
+        "rand_seed": 7,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "robustness",
+      "expected_outcome": "Different Voronoi seed; kinetics should be seed-robust.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG18",
+      "prompt": "Run grain growth at 500 K, 50 grains, with random seed 123.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "GBEvolution",
+        "T": 500,
+        "num_grains": 30,
+        "nx": 24,
+        "ny": 24,
+        "rand_seed": 123,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "robustness",
+      "expected_outcome": "Seed robustness check.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG19",
+      "prompt": "Model grain growth at 500 K with 50 grains, random seed 2024.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "GBEvolution",
+        "T": 500,
+        "num_grains": 30,
+        "nx": 24,
+        "ny": 24,
+        "rand_seed": 2024,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "robustness",
+      "expected_outcome": "Seed robustness check.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG20",
+      "prompt": "Simulate grain growth at 475 K with 100 grains using seed 99.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "GBEvolution",
+        "T": 475,
+        "num_grains": 30,
+        "nx": 24,
+        "ny": 24,
+        "rand_seed": 99,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "robustness",
+      "expected_outcome": "Seed + different T/grain combination.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG21",
+      "prompt": "Simulate 3D grain growth at 500 K with 20 grains in a periodic cube.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 3,
+        "formulation": "GBEvolution",
+        "T": 500,
+        "num_grains": 20,
+        "nx": 12,
+        "ny": 12,
+        "nz": 12,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "3d_stress",
+      "expected_outcome": "3D is substantially more expensive; tests dimensional generality.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG22",
+      "prompt": "Model 3D grain coarsening at 450 K with 30 grains.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 3,
+        "formulation": "GBEvolution",
+        "T": 450,
+        "num_grains": 30,
+        "nx": 12,
+        "ny": 12,
+        "nz": 12,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "3d_stress",
+      "expected_outcome": "3D, low T; long wall-time expected.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG23",
+      "prompt": "Simulate grain growth at 650 K with 50 grains in 2D.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "GBEvolution",
+        "T": 650,
+        "num_grains": 30,
+        "nx": 24,
+        "ny": 24,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "high_T_stress",
+      "expected_outcome": "Elevated T raises GB mobility; solver may stiffen (cf. T=800 divergence). Tests robustness/limit.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG24",
+      "prompt": "Run grain growth at 700 K with 100 grains in 2D.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "GBEvolution",
+        "T": 700,
+        "num_grains": 30,
+        "nx": 24,
+        "ny": 24,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "high_T_stress",
+      "expected_outcome": "High-T + high grain count; a known-difficult corner. Honest failure characterization.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    },
+    {
+      "id": "GG25",
+      "prompt": "Simulate grain growth at 500 K with 400 grains on an 80x80 mesh.",
+      "physics": "grain_growth",
+      "params": {
+        "dim": 2,
+        "formulation": "GBEvolution",
+        "T": 500,
+        "num_grains": 30,
+        "nx": 24,
+        "ny": 24,
+        "time_mode": "end_time",
+        "end_time": 500.0,
+        "num_steps": 50,
+        "uniform_refine": 1
+      },
+      "regime": "resolution_stress",
+      "expected_outcome": "400 grains on 80x80 likely under-resolves GBs; tests resolution-limit detection.",
+      "notes": "",
+      "pass_criteria": [
+        "G1_input_valid",
+        "G2_completed",
+        "G3_coarsened",
+        "G4_kinetics",
+        "G5_positive_rate"
+      ]
+    }
+  ]
+}

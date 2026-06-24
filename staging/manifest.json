@@ -1,0 +1,182 @@
+{
+  "evalset": "AutoMOOSE grain-growth evaluation set v1 (short-run demonstration scale)",
+  "n": 25,
+  "n_input_ok": 25,
+  "tasks": [
+    {
+      "id": "GG01",
+      "regime": "core",
+      "input_ok": true,
+      "lines": 151,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG02",
+      "regime": "core",
+      "input_ok": true,
+      "lines": 151,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG03",
+      "regime": "core",
+      "input_ok": true,
+      "lines": 151,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG04",
+      "regime": "core",
+      "input_ok": true,
+      "lines": 151,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG05",
+      "regime": "core",
+      "input_ok": true,
+      "lines": 151,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG06",
+      "regime": "core",
+      "input_ok": true,
+      "lines": 151,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG07",
+      "regime": "core",
+      "input_ok": true,
+      "lines": 151,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG08",
+      "regime": "core",
+      "input_ok": true,
+      "lines": 151,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG09",
+      "regime": "resolution",
+      "input_ok": true,
+      "lines": 151,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG10",
+      "regime": "resolution",
+      "input_ok": true,
+      "lines": 151,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG11",
+      "regime": "resolution",
+      "input_ok": true,
+      "lines": 151,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG12",
+      "regime": "resolution",
+      "input_ok": true,
+      "lines": 151,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG13",
+      "regime": "formulation",
+      "input_ok": true,
+      "lines": 170,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG14",
+      "regime": "formulation",
+      "input_ok": true,
+      "lines": 170,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG15",
+      "regime": "formulation",
+      "input_ok": true,
+      "lines": 170,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG16",
+      "regime": "formulation",
+      "input_ok": true,
+      "lines": 170,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG17",
+      "regime": "robustness",
+      "input_ok": true,
+      "lines": 151,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG18",
+      "regime": "robustness",
+      "input_ok": true,
+      "lines": 151,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG19",
+      "regime": "robustness",
+      "input_ok": true,
+      "lines": 151,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG20",
+      "regime": "robustness",
+      "input_ok": true,
+      "lines": 151,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG21",
+      "regime": "3d_stress",
+      "input_ok": true,
+      "lines": 151,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG22",
+      "regime": "3d_stress",
+      "input_ok": true,
+      "lines": 151,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG23",
+      "regime": "high_T_stress",
+      "input_ok": true,
+      "lines": 151,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG24",
+      "regime": "high_T_stress",
+      "input_ok": true,
+      "lines": 151,
+      "status": "input_generated"
+    },
+    {
+      "id": "GG25",
+      "regime": "resolution_stress",
+      "input_ok": true,
+      "lines": 151,
+      "status": "input_generated"
+    }
+  ]
+}

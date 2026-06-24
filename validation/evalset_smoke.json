@@ -1,0 +1,87 @@
+{
+  "backend": "Claude",
+  "evalset": "AutoMOOSE grain-growth evaluation set v1",
+  "n_tasks": 2,
+  "n_success": 0,
+  "success_rate": 0.0,
+  "by_regime": {
+    "core": "0/2"
+  },
+  "wall_minutes": 60.1,
+  "results": [
+    {
+      "id": "GG01",
+      "regime": "core",
+      "prompt": "Simulate isothermal grain growth in a 2D polycrystal at 450 K starting from 20 grains.",
+      "row": {
+        "backend": "Claude",
+        "model": "claude-sonnet-4-6",
+        "provider": "anthropic",
+        "physics": "grain_growth",
+        "params": {
+          "dim": 2,
+          "formulation": "GBEvolution",
+          "T": 450,
+          "num_grains": 20,
+          "nx": 40,
+          "ny": 40
+        },
+        "architect_note": "Parameters are physically reasonable, though a 40\u00d740 grid for 20 grains is quite coarse and may poorly resolve grain boundary profiles.",
+        "input_ok": true,
+        "input_lines": 151,
+        "run_id": "run_20260623_170610_263",
+        "completed": false,
+        "run_status": "pending",
+        "wall_s": 1801.6,
+        "valid": false,
+        "stage_failed": "f3_run",
+        "total_wall_s": 1804.1
+      },
+      "gates": {
+        "G1_input_valid": true,
+        "G2_completed": false,
+        "G3_coarsened": false,
+        "G4_kinetics": false,
+        "G5_positive_rate": false
+      },
+      "success": false
+    },
+    {
+      "id": "GG02",
+      "regime": "core",
+      "prompt": "Model 2D grain coarsening at 475 K with 20 initial grains in a periodic domain.",
+      "row": {
+        "backend": "Claude",
+        "model": "claude-sonnet-4-6",
+        "provider": "anthropic",
+        "physics": "grain_growth",
+        "params": {
+          "dim": 2,
+          "formulation": "GBEvolution",
+          "T": 475,
+          "num_grains": 20,
+          "nx": 40,
+          "ny": 40
+        },
+        "architect_note": "Parameters are physically reasonable, though a 40\u00d740 grid with 20 grains may be too coarse to accurately resolve grain boundary profiles and curvature-driven kinetics.",
+        "input_ok": true,
+        "input_lines": 151,
+        "run_id": "run_20260623_173613_930",
+        "completed": false,
+        "run_status": "running",
+        "wall_s": 1800.5,
+        "valid": false,
+        "stage_failed": "f3_run",
+        "total_wall_s": 1802.5
+      },
+      "gates": {
+        "G1_input_valid": true,
+        "G2_completed": false,
+        "G3_coarsened": false,
+        "G4_kinetics": false,
+        "G5_positive_rate": false
+      },
+      "success": false
+    }
+  ]
+}

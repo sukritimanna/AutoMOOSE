@@ -1,0 +1,24 @@
+{
+  "sim_id": "GG19",
+  "prompt": "Model grain growth at 500 K with 50 grains, random seed 2024.",
+  "regime": "robustness",
+  "physics": "grain_growth",
+  "params": {
+    "dim": 2,
+    "formulation": "GBEvolution",
+    "T": 500,
+    "num_grains": 30,
+    "nx": 24,
+    "ny": 24,
+    "rand_seed": 2024,
+    "time_mode": "end_time",
+    "end_time": 500.0,
+    "num_steps": 50,
+    "uniform_refine": 1
+  },
+  "backend_name": "Claude",
+  "input_ok": true,
+  "input_line_count": 151,
+  "status": "input_generated",
+  "staged_at": "2026-06-24T03:20:30Z"
+}
