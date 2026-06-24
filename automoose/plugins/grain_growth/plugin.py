@@ -298,6 +298,15 @@ def generate_input(
     **kwargs,
 ) -> str:
     dim  = int(dim)
+    num_grains = int(num_grains)
+    op_num = int(op_num)
+    # W6 fix: op_num must be large enough for a valid grain coloring.
+    # MOOSE guidance: ~8 for 2D, ~25 for 3D; scale with grain count to avoid
+    # 'Unable to find a valid grain to op coloring' failures at higher density.
+    if dim == 3:
+        op_num = max(op_num, 25)
+    else:
+        op_num = max(op_num, min(num_grains, (num_grains + 2) // 3 + 6))
     is3d = dim == 3
     p    = locals()   # pass to helper functions
 
@@ -365,7 +374,6 @@ def generate_input(
   [PolycrystalICs]
     [PolycrystalColoringIC]
       polycrystal_ic_uo = voronoi
-      {"nonlinear_preconditioning = true" if formulation=="LinearizedInterface" else ""}
     []
   []
 []"""
