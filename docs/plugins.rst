@@ -2,7 +2,35 @@ Plugin Development
 ==================
 
 AutoMOOSE's plugin registry allows you to add new physics modules
-without modifying the core agent pipeline.
+without modifying the core agent pipeline. Each plugin implements a minimal
+two-function contract, and the orchestration layer, MCP server, and UI require
+no changes when a new plugin is added.
+
+Available plugins
+-----------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 25 45
+
+   * - Plugin
+     - Status
+     - Notes
+   * - Grain Growth (Allen–Cahn)
+     - validated
+     - Non-conserved order parameters; two formulations (``GBEvolution``,
+       ``LinearizedInterface``), 2D/3D, seven presets.
+   * - Spinodal Decomposition (Cahn–Hilliard)
+     - validated
+     - Conserved order parameter; includes a CALPHAD-based Fe–Cr free-energy
+       mode validated against exact mass conservation and free-energy
+       dissipation.
+   * - Ferroelectric Switching (Landau–Ginzburg–Devonshire)
+     - stub
+     - Registered for future implementation.
+   * - Solidification (Allen–Cahn dendritic)
+     - stub
+     - Registered for future implementation.
 
 Plugin Interface
 ----------------
@@ -47,6 +75,16 @@ Plugin Interface
            ...
 
    register_plugin(MyPlugin)
+
+Verification invariants
+-----------------------
+
+When you add a plugin, you can register physics-grounded falsification
+invariants for the Skeptic agent (:math:`f_6`). These are exact or
+quantitative laws the result must obey — for example, mass conservation and
+free-energy dissipation for conserved (Cahn–Hilliard) dynamics, or monotonic
+coarsening and parabolic scaling for grain growth. The Skeptic uses them to
+issue a credibility verdict on each completed run.
 
 Common Pitfalls
 ---------------
