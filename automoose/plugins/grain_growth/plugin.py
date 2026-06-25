@@ -457,29 +457,21 @@ def generate_input(
 
     # ── Materials ─────────────────────────────────────────────────────────
     if formulation == "LinearizedInterface":
+        # Use the SAME physically-grounded copper GBEvolution material as the
+        # GBEvolution formulation. The native GBEvolution material provides the
+        # L and kappa_op properties the LinearizedInterface kernels require, with
+        # MOOSE handling the Arrhenius mobility M(T)=GBmob0*exp(-Q/kT) and the
+        # unit conversion internally. This matches MOOSE's own copper
+        # LinearizedInterface example and replaces the non-physical reduced-unit
+        # placeholders (gbmob=100) that caused immediate solver divergence.
         materials = f"""[Materials]
-  [properties]
-    type        = GenericConstantMaterial
-    prop_names  = 'gbmob gbenergy gbwidth gamma_asymm'
-    prop_values = '{gbmob} {gbenergy_li} {gbwidth_li} {gamma_asymm}'
-  []
-  [kappa_op]
-    type                     = ParsedMaterial
-    material_property_names  = 'gbenergy gbwidth'
-    property_name            = kappa_op
-    expression               = '3/4*gbenergy*gbwidth'
-  []
-  [L]
-    type                     = ParsedMaterial
-    material_property_names  = 'gbmob gbwidth'
-    property_name            = L
-    expression               = '4/3*gbmob/gbwidth'
-  []
-  [mu]
-    type                     = ParsedMaterial
-    material_property_names  = 'gbenergy gbwidth'
-    property_name            = mu
-    expression               = '6*gbenergy/gbwidth'
+  [CuGrGr]
+    type     = GBEvolution
+    T        = {T}
+    wGB      = {wGB}
+    GBmob0   = {GBmob0}
+    Q        = {Q}
+    GBenergy = {GBenergy}
   []
 []"""
     else:
