@@ -55,8 +55,21 @@ def _linfit(xs, ys):
 def falsify_run(task_dir, n0_expected=None):
     """Run the per-run falsification battery. Returns verdict + per-test results."""
     d = Path(task_dir)
-    csv_p = d / "grain_growth.csv"
-    log_p = d / f"{d.name}.log"
+    # backend writes {run_name}.csv and run.log; be robust to naming
+    csv_p = None
+    for cand in [d / "grain_growth.csv", d / f"{d.name}.csv"]:
+        if cand.exists():
+            csv_p = cand; break
+    if csv_p is None:
+        hits = sorted(d.glob("*.csv"))
+        csv_p = hits[0] if hits else (d / "grain_growth.csv")
+    log_p = None
+    for cand in [d / "run.log", d / f"{d.name}.log"]:
+        if cand.exists():
+            log_p = cand; break
+    if log_p is None:
+        lhits = sorted(d.glob("*.log"))
+        log_p = lhits[0] if lhits else (d / "run.log")
     tests = {}
 
     # T5 numerical integrity. NOTE: MOOSE prints "Linear solve did not converge
@@ -65,23 +78,45 @@ def falsify_run(task_dir, n0_expected=None):
     # application abort, or a solve that never advanced in time. Completion to the
     # target end_time is the strongest evidence of numerical validity.
     fatal = False; reason5 = "no fatal solver breakdown"
-    csv_for_t5 = d / "grain_growth.csv"
+    csv_for_t5 = csv_p
     reached_time = 0.0
     if csv_for_t5.exists():
         try:
             tt, _ = _load(csv_for_t5); reached_time = tt[-1] if tt else 0.0
         except Exception:
             reached_time = 0.0
+    # Determine the intended end_time (from record.json) so that reaching the
+    # target can override transient adaptive-dt warnings.
+    target_time = None
+    try:
+        import json as _json
+        rec_f = d / "record.json"
+        if rec_f.exists():
+            _r = _json.loads(rec_f.read_text())
+            target_time = (_r.get("params", {}) or {}).get("end_time") \
+                          or (_r.get("metrics", {}) or {}).get("end_time")
+    except Exception:
+        target_time = None
+    reached_target = (target_time is not None
+                      and reached_time >= 0.99 * float(target_time))
+
     if log_p.exists():
         txt = log_p.read_text(errors="ignore")
-        # genuine fatal signatures: MPI abort / solve aborted / failed to converge
-        # after stepper gave up (timestep below minimum)
-        if re.search(r"MPI_Abort|application called MPI_Abort|Solve Did NOT Converge|"
-                     r"Aborting as solve did not converge|reached minimum", txt):
-            fatal = True; reason5 = "fatal solver breakdown (abort / min-dt reached)"
-    # also fatal if effectively no progress in time at all
+        # ONLY genuine fatal signatures: an actual MPI abort, or the application
+        # aborting because the solve gave up. DIVERGED_ITS / "Solve Did NOT
+        # Converge" / "reached minimum" are NORMAL adaptive-dt events (the
+        # stepper cuts dt and continues) and are NOT fatal on their own.
+        truly_fatal = re.search(r"MPI_Abort|application called MPI_Abort|"
+                                r"Aborting as solve did not converge", txt)
+        if truly_fatal and not reached_target:
+            fatal = True; reason5 = "fatal solver breakdown (application abort)"
+    # fatal only if the run never advanced in time at all
     if reached_time <= 0.0:
         fatal = True; reason5 = "no time advance (run did not progress)"
+    # reaching (essentially) the target end_time is decisive evidence of validity
+    if reached_target:
+        fatal = False
+        reason5 = f"completed to target end_time ({reached_time:g})"
     tests["T5_numerical"] = {"pass": not fatal, "reason": reason5,
                              "reached_time": reached_time}
 

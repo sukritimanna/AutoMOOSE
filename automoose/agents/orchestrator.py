@@ -26,6 +26,7 @@ import os, sys, json, time, argparse
 from urllib import request as _rq, error as _err
 
 from automoose.llm import get_client
+from automoose.agents import skeptic
 
 BACKEND = os.environ.get("BACKEND_URL", "http://localhost:8000").rstrip("/")
 POLL_S = float(os.environ.get("ORCH_POLL_S", "3"))
@@ -98,6 +99,31 @@ def f4_review(run_id: str) -> dict:
 
 
 # ── f5 Report (capability row) ──────────────────────────────────────────────
+# -- f6 Skeptic (physics-grounded falsification) -----------------------------
+def f6_skeptic(run_id: str, physics: str, params: dict) -> dict:
+    """Adversarially falsify the completed run against physics invariants.
+    Distinct from the Reviewer (f4): f4 asks 'does this look valid?' (LLM);
+    f6 applies exact/quantitative physics laws and returns a verdict."""
+    try:
+        rec = _http("GET", f"/runs/{run_id}")
+    except Exception as e:
+        return {"credible": None, "skeptic_error": f"could not fetch run: {e}"}
+    task_dir = rec.get("run_dir")
+    if not task_dir:
+        return {"credible": None, "skeptic_error": "run_dir not in run record"}
+    n0 = params.get("n_grains") or params.get("grain_num") or params.get("N0")
+    try:
+        if physics == "spinodal":
+            verdict = skeptic.falsify(task_dir, physics="spinodal")
+        else:
+            verdict = skeptic.falsify(task_dir, physics="grain_growth", n0_expected=n0)
+    except Exception as e:
+        return {"credible": None, "skeptic_error": f"{type(e).__name__}: {e}"}
+    return {"credible": verdict.get("credible"),
+            "falsified_by": verdict.get("falsified_by", []),
+            "skeptic_diagnosis": verdict.get("diagnosis", "")}
+
+
 def orchestrate(physics: str, params: dict, backend_name: str) -> dict:
     t0 = time.time()
     row = {"backend": backend_name,
@@ -122,6 +148,12 @@ def orchestrate(physics: str, params: dict, backend_name: str) -> dict:
         row.update(review=v.get("review", ""),
                    valid="valid" in v.get("review", "").lower(),
                    metrics=v.get("metrics", {}))
+
+        # f6 Skeptic: physics-grounded falsification of the completed run
+        sk_res = f6_skeptic(r["run_id"], physics, params)
+        row.update(credible=sk_res.get("credible"),
+                   falsified_by=sk_res.get("falsified_by", []),
+                   skeptic_diagnosis=sk_res.get("skeptic_diagnosis", ""))
     except Exception as e:
         row.update(completed=False, valid=False, error=f"{type(e).__name__}: {e}")
     return _finish(row, t0)
