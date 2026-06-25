@@ -27,6 +27,7 @@ from urllib import request as _rq, error as _err
 
 from automoose.llm import get_client
 from automoose.agents import skeptic
+from automoose.agents import recovery
 
 BACKEND = os.environ.get("BACKEND_URL", "http://localhost:8000").rstrip("/")
 POLL_S = float(os.environ.get("ORCH_POLL_S", "3"))
@@ -156,6 +157,114 @@ def orchestrate(physics: str, params: dict, backend_name: str) -> dict:
                    skeptic_diagnosis=sk_res.get("skeptic_diagnosis", ""))
     except Exception as e:
         row.update(completed=False, valid=False, error=f"{type(e).__name__}: {e}")
+    return _finish(row, t0)
+
+
+
+def _fetch_log(run_id: str) -> str:
+    """Best-effort read of the run's solver log for failure diagnosis."""
+    try:
+        rec = _http("GET", f"/runs/{run_id}")
+    except Exception:
+        return ""
+    import os
+    lp = rec.get("log_path") or ""
+    if lp and os.path.exists(lp):
+        try:
+            return open(lp, errors="ignore").read()
+        except Exception:
+            return ""
+    rd = rec.get("run_dir") or ""
+    if rd and os.path.isdir(rd):
+        from pathlib import Path as _P
+        for cand in (_P(rd) / "run.log",):
+            if cand.exists():
+                return cand.read_text(errors="ignore")
+        hits = sorted(_P(rd).glob("*.log"))
+        if hits:
+            return hits[0].read_text(errors="ignore")
+    return ""
+
+
+
+def orchestrate_with_recovery(physics: str, params: dict,
+                              backend_name: str) -> dict:
+    """Closed-loop variant: generate -> run -> verify, and on failure diagnose
+    the cause, correct the params, and retry up to recovery.MAX_ATTEMPTS.
+
+    Honest contract: a task is reported credible ONLY if a generated+run input
+    passes the Skeptic. If attempts are exhausted, the task is flagged
+    outside_envelope=True with the full correction history, never silently
+    reported as valid."""
+    t0 = time.time()
+    row = {"backend": backend_name,
+           "model": os.environ.get("LLM_MODEL", "?"),
+           "provider": os.environ.get("LLM_PROVIDER", "anthropic"),
+           "physics": physics, "params0": dict(params),
+           "recovery": True}
+    history = []
+    params_try = dict(params)
+    final = {"credible": None, "completed": False}
+
+    try:
+        f1_architect(physics, params_try)  # plan once; corrections are param-level
+        for attempt in range(recovery.MAX_ATTEMPTS):
+            attempt_rec = {"attempt": attempt, "params": dict(params_try)}
+
+            # generate
+            i = f2_input(physics, params_try)
+            if not i["input_ok"]:
+                diag = {"class": "GENERATION_FAILED",
+                        "evidence": "f2 produced no input", "reason": "generation failed"}
+                params_try, change = recovery.apply_correction(params_try, diag)
+                attempt_rec.update(stage="f2_input", diagnosis=diag, change=change)
+                history.append(attempt_rec)
+                if recovery.correction_exhausted(history):
+                    break
+                continue
+
+            # run
+            r = f3_run(physics, params_try)
+            if not r["completed"]:
+                log = _fetch_log(r["run_id"])
+                diag = recovery.classify_failure(log, completed=False)
+                params_try, change = recovery.apply_correction(params_try, diag)
+                attempt_rec.update(stage="f3_run", run_id=r["run_id"],
+                                   diagnosis=diag, change=change)
+                history.append(attempt_rec)
+                if recovery.correction_exhausted(history):
+                    break
+                continue
+
+            # verify (Skeptic is the binding check)
+            sk = f6_skeptic(r["run_id"], physics, params_try)
+            if sk.get("credible") is True:
+                attempt_rec.update(stage="credible", run_id=r["run_id"], diagnosis=None)
+                history.append(attempt_rec)
+                final = {"credible": True, "completed": True, "run_id": r["run_id"]}
+                break
+
+            # completed but falsified -> diagnose from the physics verdict
+            log = _fetch_log(r["run_id"])
+            diag = recovery.classify_failure(log, completed=True, skeptic_verdict=sk)
+            params_try, change = recovery.apply_correction(params_try, diag)
+            attempt_rec.update(stage="f6_skeptic", run_id=r["run_id"],
+                               falsified_by=sk.get("falsified_by", []),
+                               diagnosis=diag, change=change)
+            history.append(attempt_rec)
+            if recovery.correction_exhausted(history):
+                break
+
+        row.update(attempts=len(history),
+                   correction_history=history,
+                   credible=final["credible"],
+                   completed=final["completed"],
+                   outside_envelope=(final.get("credible") is not True),
+                   params_final=params_try)
+    except Exception as e:
+        row.update(error=f"{type(e).__name__}: {e}",
+                   correction_history=history, credible=None,
+                   outside_envelope=True)
     return _finish(row, t0)
 
 
