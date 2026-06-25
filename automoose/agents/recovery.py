@@ -25,6 +25,7 @@ MIN_DT0      = 1.0         # ns, do not reduce initial dt below this
 MAX_REFINE   = 4           # do not refine uniform_refine beyond this
 MAX_NX       = 96          # do not grow mesh beyond this per dimension
 MAX_END_TIME = 16000.0    # ns, do not extend integration beyond this
+DEFAULT_DT_START = 25.0   # plugin IterationAdaptiveDT default dt
 
 
 # ── failure classification ──────────────────────────────────────────────────
@@ -120,18 +121,29 @@ def apply_correction(params: dict, diagnosis: dict) -> tuple[dict, dict]:
         p[key] = val
 
     if cls in ("SOLVER_DIVERGENCE", "NAN_DETECTED"):
-        # halve the initial timestep (down to a floor); use the real param name
-        dt_key = "dt_start" if "dt_start" in params else (
-                 "dt0" if "dt0" in params else None)
-        if dt_key is not None:
-            dt0 = float(params[dt_key])
-            new_dt0 = max(MIN_DT0, dt0 / 2.0)
-            if new_dt0 < dt0:
-                _set(dt_key, new_dt0, "reduce initial timestep to regain convergence")
+        # Reduce the initial timestep. The grain_growth plugin always uses
+        # IterationAdaptiveDT with dt = dt_start (default 25.0), so even tasks
+        # that did not set dt_start explicitly ran at dt_start=25. Inject and
+        # halve it so the correction has real effect.
+        if "dt_start" in params:
+            dt0 = float(params["dt_start"])
+        elif "dt0" in params:
+            dt0 = float(params["dt0"])
+        else:
+            dt0 = float(DEFAULT_DT_START)   # plugin default
+        new_dt0 = max(MIN_DT0, dt0 / 2.0)
+        if new_dt0 < dt0:
+            _set("dt_start", new_dt0, "reduce initial timestep to regain convergence")
         cutback = float(params.get("dt_cutback", 0.5))
         new_cb = max(0.25, cutback - 0.1)
         if new_cb < cutback:
             _set("dt_cutback", new_cb, "more aggressive cutback on failed steps")
+        # for the ill-conditioned linearized-interface solver, also allow more
+        # nonlinear iterations before declaring failure
+        if params.get("formulation") == "LinearizedInterface":
+            nlmax = int(params.get("nl_max_its", 20))
+            if nlmax < 50:
+                _set("nl_max_its", 50, "allow more nonlinear iterations for stiff LI solve")
 
     elif cls == "KINETICS_NOT_ASYMPTOTIC":
         # extend integration so the asymptotic (parabolic) regime develops
@@ -171,3 +183,60 @@ def apply_correction(params: dict, diagnosis: dict) -> tuple[dict, dict]:
 def correction_exhausted(change_history: list) -> bool:
     """True if the last attempt produced no actionable edit (loop should stop)."""
     return bool(change_history) and not change_history[-1].get("applied", False)
+
+
+# ── CLI: diagnose a run dir and emit corrected params as JSON ────────────────
+def _cli():
+    import argparse, json, sys
+    from pathlib import Path
+    ap = argparse.ArgumentParser(description="Diagnose a failed run and emit corrected params.")
+    ap.add_argument("--diagnose", required=True, help="run directory to diagnose")
+    ap.add_argument("--params", default=None, help="JSON file or string of current params")
+    ap.add_argument("--skeptic", default=None, help="optional skeptic verdict JSON (string or file)")
+    a = ap.parse_args()
+
+    d = Path(a.diagnose)
+    # find log
+    log = ""
+    for c in (d / "run.log", d / f"{d.name}.log"):
+        if c.exists(): log = c.read_text(errors="ignore"); break
+    if not log:
+        hits = sorted(d.glob("*.log"))
+        if hits: log = hits[0].read_text(errors="ignore")
+
+    # current params: from --params, else metadata.json
+    def _load(x):
+        if x is None: return None
+        p = Path(x)
+        return json.loads(p.read_text()) if p.exists() else json.loads(x)
+    params = _load(a.params)
+    if params is None:
+        for c in (d / "metadata.json", d / "record.json"):
+            if c.exists():
+                params = (json.loads(c.read_text()).get("params", {})); break
+    params = params or {}
+
+    sk = _load(a.skeptic)
+
+    # completion-aware: read end_time + reached time
+    reached, target = None, None
+    try:
+        target = float(params.get("end_time")) if params.get("end_time") is not None else None
+    except Exception:
+        target = None
+    import re
+    times = re.findall(r"time\s*=\s*([0-9.eE+\-]+)", log)
+    if times:
+        try: reached = float(times[-1])
+        except Exception: reached = None
+
+    completed = ("Finished Executing" in log)
+    diag = classify_failure(log, completed=completed, skeptic_verdict=sk,
+                            reached_time=reached, target_time=target)
+    new_params, change = apply_correction(params, diag)
+    print(json.dumps({"diagnosis": diag, "change": change,
+                      "corrected_params": new_params}, indent=2))
+
+
+if __name__ == "__main__":
+    _cli()
