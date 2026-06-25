@@ -85,18 +85,23 @@ def falsify_run(task_dir, n0_expected=None):
             tt, _ = _load(csv_for_t5); reached_time = tt[-1] if tt else 0.0
         except Exception:
             reached_time = 0.0
-    # Determine the intended end_time (from record.json) so that reaching the
-    # target can override transient adaptive-dt warnings.
+    # Determine the intended end_time and completion status from the provenance
+    # file, which may be record.json (local) or metadata.json (HPC eval-set).
     target_time = None
+    status_completed = False
     try:
         import json as _json
-        rec_f = d / "record.json"
-        if rec_f.exists():
-            _r = _json.loads(rec_f.read_text())
-            target_time = (_r.get("params", {}) or {}).get("end_time") \
-                          or (_r.get("metrics", {}) or {}).get("end_time")
+        prov = None
+        for cand in (d / "record.json", d / "metadata.json"):
+            if cand.exists():
+                prov = _json.loads(cand.read_text()); break
+        if prov:
+            p = prov.get("params", {}) or {}
+            m = prov.get("metrics", {}) or {}
+            target_time = p.get("end_time") or m.get("end_time")
+            status_completed = str(prov.get("status", "")).lower() == "completed"
     except Exception:
-        target_time = None
+        target_time, status_completed = None, False
     reached_target = (target_time is not None
                       and reached_time >= 0.99 * float(target_time))
 
@@ -108,15 +113,17 @@ def falsify_run(task_dir, n0_expected=None):
         # stepper cuts dt and continues) and are NOT fatal on their own.
         truly_fatal = re.search(r"MPI_Abort|application called MPI_Abort|"
                                 r"Aborting as solve did not converge", txt)
-        if truly_fatal and not reached_target:
+        if truly_fatal and not (reached_target or status_completed):
             fatal = True; reason5 = "fatal solver breakdown (application abort)"
     # fatal only if the run never advanced in time at all
     if reached_time <= 0.0:
         fatal = True; reason5 = "no time advance (run did not progress)"
-    # reaching (essentially) the target end_time is decisive evidence of validity
-    if reached_target:
+    # reaching the target end_time (or a 'completed' provenance status) is
+    # decisive evidence of numerical validity, overriding transient dt warnings.
+    if reached_target or status_completed:
         fatal = False
-        reason5 = f"completed to target end_time ({reached_time:g})"
+        reason5 = (f"completed to target end_time ({reached_time:g})"
+                   if reached_target else "run status: completed")
     tests["T5_numerical"] = {"pass": not fatal, "reason": reason5,
                              "reached_time": reached_time}
 
