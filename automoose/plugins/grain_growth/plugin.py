@@ -304,7 +304,16 @@ def generate_input(
     # MOOSE guidance: ~8 for 2D, ~25 for 3D; scale with grain count to avoid
     # 'Unable to find a valid grain to op coloring' failures at higher density.
     if dim == 3:
-        op_num = max(op_num, 25)
+        # 3D polycrystals need more order parameters than 2D for a valid
+        # coloring (~25). But op_num must not exceed num_grains: for <=25 grains
+        # use one OP per grain (always colorable; verified on Perlmutter to color
+        # and solve with healthy convergence), and for denser polycrystals
+        # target ~26 via coloring-based reduction.
+        if num_grains <= 25:
+            op_num = max(op_num, num_grains)
+        else:
+            op_num = max(op_num, 26)
+        op_num = min(op_num, num_grains)   # never exceed grain count
     else:
         op_num = max(op_num, min(num_grains, (num_grains + 2) // 3 + 6))
     is3d = dim == 3
