@@ -75,6 +75,20 @@ def classify_failure(log_text: str,
             return {"class": "SOLVER_DIVERGENCE",
                     "evidence": "solve did not converge / diverged before completion",
                     "reason": "Newton/Krylov failed to converge at the chosen timestep"}
+        # Skeptic established no time advance (T5) even without an explicit
+        # DIVERGED string: the first solve failed and the run never advanced.
+        # Checked before the loose mesh-keyword heuristic below (the word "Mesh"
+        # appears in ordinary setup output and must not mask a divergence).
+        if skeptic_verdict and skeptic_verdict.get("credible") is False:
+            fb = set(skeptic_verdict.get("falsified_by", []))
+            t5 = skeptic_verdict.get("tests", {}).get("T5_numerical", {})
+            if "T5_numerical" in fb and (
+                    "no time advance" in str(t5.get("reason", "")).lower()
+                    or t5.get("reached_time", None) == 0.0
+                    or (reached_time is not None and reached_time == 0.0)):
+                return {"class": "SOLVER_DIVERGENCE",
+                        "evidence": "no time advance; Skeptic T5 on an incomplete run",
+                        "reason": "first solve failed to converge; run never advanced past t=0"}
         if re.search(r"Mesh|element.*too|under-?resolv|refine", txt, re.I):
             return {"class": "MESH_RESOLUTION",
                     "evidence": "mesh/resolution message in log",
