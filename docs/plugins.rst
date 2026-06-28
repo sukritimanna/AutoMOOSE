@@ -1,10 +1,10 @@
 Plugin Development
 ==================
 
-AutoMOOSE's plugin registry allows you to add new physics modules
-without modifying the core agent pipeline. Each plugin implements a minimal
-two-function contract, and the orchestration layer, MCP server, and UI require
-no changes when a new plugin is added.
+AutoMOOSE's plugin registry lets you add new physics modules without modifying
+the core agent pipeline. Each plugin is a self-contained directory, and the
+orchestration layer, MCP server, and UI require no changes when a new plugin is
+added — the registry auto-discovers it at start-up.
 
 Available plugins
 -----------------
@@ -17,11 +17,11 @@ Available plugins
      - Status
      - Notes
    * - Grain Growth (Allen–Cahn)
-     - validated
+     - ready
      - Non-conserved order parameters; two formulations (``GBEvolution``,
        ``LinearizedInterface``), 2D/3D, seven presets.
    * - Spinodal Decomposition (Cahn–Hilliard)
-     - validated
+     - ready
      - Conserved order parameter; includes a CALPHAD-based Fe–Cr free-energy
        mode validated against exact mass conservation and free-energy
        dissipation.
@@ -35,56 +35,49 @@ Available plugins
 Plugin Interface
 ----------------
 
+A plugin lives in ``automoose/plugins/<name>/plugin.py`` and exposes a
+``PLUGIN`` metadata dictionary together with a module-level
+``generate_input(**params)``. An optional ``parse_results(csv_data)`` maps the
+MOOSE postprocessor CSV to a metrics dict. No registration call is required —
+``plugin_registry.py`` discovers every directory whose ``plugin.py`` defines a
+``PLUGIN`` dict:
+
 .. code-block:: python
 
-   from automoose.plugins import PhysicsPlugin, register_plugin
+   # automoose/plugins/myphysics/plugin.py
 
-   class MyPlugin(PhysicsPlugin):
-       name = "MyPhysics"
+   PLUGIN = {
+       "label":          "My Physics",
+       "status":         "ready",          # "ready" | "stub"
+       "params":         {                 # name -> metadata
+           "T":  {"default": 800, "range": [300, 1200]},
+           # ...
+       },
+       "sweepable":      ["T"],            # parameters a sweep may vary
+       "executable_key": "MOOSE_EXEC",     # env var holding the solver path
+       "system_prompt":  "You are a MOOSE expert for <physics>.",
+   }
 
-       def generate_input(self, **params) -> str:
-           """
-           Generate a complete MOOSE .i input file string.
 
-           Parameters
-           ----------
-           **params : dict
-               Simulation parameters from the Architect agent.
+   def generate_input(**params) -> str:
+       """Return a complete MOOSE .i input file as a string."""
+       ...
 
-           Returns
-           -------
-           str
-               Valid MOOSE input file content.
-           """
-           ...
 
-       def parse_results(self, csv_data: str) -> dict:
-           """
-           Parse MOOSE postprocessor CSV output.
-
-           Parameters
-           ----------
-           csv_data : str
-               Raw CSV string from MOOSE postprocessor output.
-
-           Returns
-           -------
-           dict
-               Structured results dictionary.
-           """
-           ...
-
-   register_plugin(MyPlugin)
+   def parse_results(csv_data) -> dict:    # optional
+       """Map MOOSE postprocessor CSV output to a structured metrics dict."""
+       ...
 
 Verification invariants
 -----------------------
 
-When you add a plugin, you can register physics-grounded falsification
-invariants for the Skeptic agent (:math:`f_6`). These are exact or
-quantitative laws the result must obey — for example, mass conservation and
-free-energy dissipation for conserved (Cahn–Hilliard) dynamics, or monotonic
-coarsening and parabolic scaling for grain growth. The Skeptic uses them to
-issue a credibility verdict on each completed run.
+Physics-grounded falsification invariants are defined in the Skeptic agent
+(:math:`f_6`), currently for the grain-growth and spinodal domains. These are
+exact or quantitative laws the result must obey — for example mass conservation
+and free-energy dissipation for conserved (Cahn–Hilliard) dynamics, or monotonic
+coarsening and parabolic Burke–Turnbull scaling for grain growth. The Skeptic
+uses them to issue a credibility verdict on each completed run. Extending the
+Skeptic to a new plugin means adding an invariant battery for that physics.
 
 Common Pitfalls
 ---------------

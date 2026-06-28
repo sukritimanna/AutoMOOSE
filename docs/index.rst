@@ -12,10 +12,10 @@ AutoMOOSE
 
 **An LLM-driven agentic framework for automated MOOSE phase-field simulations.**
 
-AutoMOOSE orchestrates five specialized AI agents to automate the full
+AutoMOOSE orchestrates six specialized AI agents to automate the full
 simulation lifecycle — from natural-language problem specification through
-mesh generation, input file construction, job execution, result review,
-and visualization.
+mesh generation, input file construction, job execution, screening,
+physics-grounded falsification, closed-loop recovery, and visualization.
 
 .. toctree::
    :maxdepth: 2

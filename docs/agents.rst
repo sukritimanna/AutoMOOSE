@@ -36,9 +36,10 @@ Execution layer
    self-contained run directory, and records a full provenance manifest.
 
 **Reviewer** (:math:`f_4`)
-   On a non-zero exit, diagnoses the failure class and proposes corrected
-   parameters, returning them to the Input Writer via the retry arc. This is an
-   *operational* check: did the simulation run?
+   Screens the completed run — an *operational* check: did it reach a terminal
+   state and do the metrics look physically valid? The Reviewer **does not
+   repair**; correction is handled by the closed-loop recovery module acting
+   on the Skeptic's verdict.
 
 Epistemic layer
 ---------------
@@ -55,7 +56,20 @@ Epistemic layer
    numerical integrity, and cross-run Arrhenius consistency. For conserved
    Cahn–Hilliard dynamics it tests the exact laws of mass conservation and
    free-energy dissipation, plus coarsening. Each invariant returns a verdict
-   and, on failure, a diagnosis that localizes the likely cause.
+   and, on failure, a diagnosis that localizes the likely cause. The Skeptic
+   falsifies but **does not repair**.
+
+Closed-loop recovery
+--------------------
+
+When the Skeptic falsifies a run for a recoverable reason (for example a
+time-step divergence), ``recovery.py`` classifies the failure and applies a
+bounded correction — such as a time-step cutback
+:math:`\Delta t \leftarrow \alpha\,\Delta t` — before re-running the pipeline.
+Detection is kept separate from correction, and a corrected run is accepted
+only if it re-completes **and** the Skeptic re-admits it. Recovery actions are
+logged, so an automatically corrected run carries an audit trail from prompt
+to accepted result.
 
 Model-agnostic backend
 ----------------------

@@ -13,8 +13,10 @@ Server Details
 - **Port**: ``8001``
 - **Framework**: Starlette / uvicorn
 
-The MCP server acts as a hub, routing tool calls from external clients
-to the five-agent pipeline and plugin registry.
+The MCP server acts as a hub, routing tool calls from external clients to the
+six-agent pipeline and plugin registry. Validation, falsification, and recovery
+run **inside** the backend pipeline that ``run_simulation`` and ``run_sweep``
+invoke, rather than as separately callable tools.
 
 Available Tools
 ---------------
@@ -23,48 +25,59 @@ The server exposes ten tools:
 
 .. list-table::
    :header-rows: 1
-   :widths: 30 70
+   :widths: 28 72
 
    * - Tool Name
      - Description
+   * - ``health_check``
+     - Verify the backend is up and the MOOSE executables are found
    * - ``list_plugins``
-     - List all registered physics plugins and their status
-   * - ``create_run``
-     - Initialize a new simulation run with given parameters
+     - List physics plugins with their parameters and sweep fields
    * - ``generate_input``
-     - Invoke f₂ Input Writer to produce a MOOSE ``.i`` file
-   * - ``submit_run``
-     - Execute the simulation via f₃ Runner
+     - Preview a MOOSE ``.i`` file without running it
+   * - ``run_simulation``
+     - Launch a single simulation; returns a ``run_id``
+   * - ``run_sweep``
+     - Launch a parallel sweep over a parameter list
    * - ``get_run_status``
-     - Poll run status from ``record.json``
-   * - ``get_run_log``
-     - Retrieve ``run.log`` content for a given run
-   * - ``review_run``
-     - Invoke f₄ Reviewer on completed run output
+     - Poll status: pending / running / done / failed
    * - ``get_results``
-     - Return parsed postprocessor CSV data
-   * - ``visualize_run``
-     - Trigger f₅ Visualization for a completed run
+     - Retrieve metrics (``N(t)``, ``R²``, ``dN/dt``, …)
    * - ``list_runs``
-     - List all runs with status and metadata
+     - Browse run history with optional filters
+   * - ``get_log_tail``
+     - Read the last *N* lines of the MOOSE solver log
+   * - ``stop_run``
+     - Terminate an active simulation
 
-Example: Creating a Run via MCP
---------------------------------
+Example: running a simulation
+-----------------------------
+
+From an MCP client (Claude Desktop, Claude Code, or any MCP-compatible tool),
+the tools are called directly:
+
+.. code-block:: text
+
+   run_simulation(physics="grain_growth",
+                  params={"T": 450, "num_grains": 15, "dim": 2})   ->  run_id
+   get_run_status(run_id)                                          ->  "done"
+   get_results(run_id)                                            ->  metrics
+
+The same pipeline is reachable over the FastAPI REST backend (port 8000), which
+is convenient for scripted use:
 
 .. code-block:: python
 
    import httpx
 
-   response = httpx.post("http://localhost:8001/mcp/tool", json={
-       "tool": "create_run",
-       "params": {
-           "plugin": "GrainGrowth",
-           "temperature": 600,
-           "duration": 100,
-           "mesh_size": [50, 50]
-       }
-   })
-   print(response.json())
+   started = httpx.post("http://localhost:8000/run", json={
+       "physics": "grain_growth",
+       "params":  {"T": 450, "num_grains": 15},
+   }).json()
+   run_id = started["run_id"]
+
+   status = httpx.get(f"http://localhost:8000/runs/{run_id}").json()["status"]
+   csv    = httpx.get(f"http://localhost:8000/runs/{run_id}/csv").text
 
 Future Directions
 -----------------

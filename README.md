@@ -21,21 +21,24 @@
 
 ## Overview
 
-**AutoMOOSE** is an agentic AI framework that automates the full lifecycle of [MOOSE](https://mooseframework.inl.gov/) phase-field simulations — from natural-language problem specification through mesh generation, input file construction, job execution, result review, and visualization.
+**AutoMOOSE** is an agentic AI framework that automates the full lifecycle of [MOOSE](https://mooseframework.inl.gov/) phase-field simulations — from a natural-language problem specification through mesh and input-file construction, job execution, screening, **physics-grounded falsification**, closed-loop recovery, and visualization.
 
-The framework is composed of five specialized agents:
+The framework is a **six-agent pipeline**, formally `S = f₆ ∘ f₅ ∘ f₄ ∘ f₃ ∘ f₂ ∘ f₁(U)`:
 
 | Agent | Symbol | Role |
 |-------|--------|------|
-| Architect | f₁ | Decomposes user intent into simulation parameters |
-| Input Writer | f₂ | Generates MOOSE `.i` input files via six sub-agents |
-| Runner | f₃ | Executes simulations and monitors convergence |
-| Reviewer | f₄ | Validates output and detects errors |
-| Visualization | f₅ | Renders phase-field evolution figures |
+| Architect | f₁ | Decomposes user intent into a structured simulation plan |
+| Input Writer | f₂ | Generates the MOOSE `.i` input file via six sub-agents |
+| Runner | f₃ | Executes the simulation and monitors it to a terminal state |
+| Reviewer | f₄ | **Screens** the run — *did it complete and look valid?* (does **not** repair) |
+| Visualization | f₅ | Extracts observables and writes a natural-language interpretation |
+| Skeptic | f₆ | **Adversarially falsifies** the result against physics invariants (does **not** repair) |
 
-A **plugin registry** enables extensible physics support via a standardized `generate_input(**params) → str` / `parse_results(csv_data) → dict` interface. Currently registered plugins: **GrainGrowth**, with Solidification, Spinodal, and Precipitate stubs in development.
+Detection is deliberately separated from correction: the Skeptic falsifies but never repairs, and a distinct closed-loop module (`recovery.py`) acts on its verdict — classifying the failure and applying a bounded correction (e.g. a time-step cutback `Δt ← α·Δt`) before re-running. A corrected run is accepted only if it re-completes **and** the Skeptic re-admits it.
 
-The backend exposes a **MCP server** (Starlette/uvicorn, port 8001) with ten tools over stdio and SSE transports, backed by a FastAPI REST API (port 8000) and a Vite/React frontend (port 5174).
+A **plugin registry** decouples physics from the agents via a small `PLUGIN` dict + `generate_input(**params) -> str` contract (see below). The backend exposes a **Model Context Protocol (MCP)** server (Starlette/uvicorn, port 8001, stdio + SSE) with ten tools, backed by a FastAPI REST API (port 8000) and a Vite/React frontend.
+
+The scientific validation of the framework (a pre-registered grain-growth benchmark, an ensemble Arrhenius analysis, and a second conserved-dynamics domain) is reported in the companion article (see [Citation](#citation)).
 
 ---
 
@@ -48,7 +51,7 @@ User Query
 f₁ Architect ──► Plugin Registry
     │                   │
     ▼                   ▼
-f₂ Input Writer  ◄── generate_input()
+f₂ Input Writer  ◄── generate_input(**params)
   ├── Meshing
   ├── Variables
   ├── Kernels
@@ -57,13 +60,19 @@ f₂ Input Writer  ◄── generate_input()
   └── Executioner
     │
     ▼
-f₃ Runner ──► MOOSE Executable
+f₃ Runner ──► Execution Backend (local | HPC/SLURM) ──► MOOSE Executable
     │
     ▼
-f₄ Reviewer ──► parse_results()
+f₄ Reviewer        screen: did it run and look valid?
     │
     ▼
-f₅ Visualization
+f₅ Visualization ──► parse_results(csv_data)
+    │
+    ▼
+f₆ Skeptic ──► physics-grounded falsification (verdict)
+    │
+    ▼  (on a falsified, recoverable failure)
+recovery.py ──► classify failure → bounded correction → re-run pipeline
 ```
 
 ---
@@ -74,61 +83,69 @@ f₅ Visualization
 
 - Python 3.10+
 - MOOSE framework compiled (set `MOOSE_EXEC` in `config.env`)
-- Node.js 18+ (for frontend)
+- Node.js 18+ (for the optional frontend)
 
 ### Installation
 
 ```bash
-git clone https://github.com/<your-org>/AutoMOOSE.git
+git clone https://github.com/sukritimanna/AutoMOOSE.git
 cd AutoMOOSE
 
 # Backend
 pip install -r requirements.txt
-cp config.env.example config.env  # set MOOSE_EXEC path
+cp config.env.example config.env   # set MOOSE_EXEC and the LLM backend
 
-# Frontend
+# Frontend (optional)
 cd frontend && npm install && cd ..
 ```
 
 ### Running
 
 ```bash
-# Start backend (MCP + FastAPI)
-cd backend
-export $(grep -v '^#' ../config.env | xargs)
-uvicorn server:app --port 8000
+# Start the FastAPI backend (port 8000) and the frontend
+bash start.sh
 
-# Start MCP server
-uvicorn mcp_server:app --port 8001
-
-# Start frontend
-cd frontend && npm run dev
+# MCP server — stdio (Claude Desktop) or SSE (remote / Claude Code)
+python automoose/mcp_server.py                       # stdio
+python automoose/mcp_server.py --transport sse --port 8001   # SSE
 ```
 
-Open [http://localhost:5174](http://localhost:5174) in your browser.
+The pipeline is **model-agnostic**: the provider, model, and endpoint are read from `config.env`, so the same agents run on Claude, Qwen, or a self-hosted open-weights model behind an OpenAI-compatible endpoint — a configuration change, not a code change.
 
 ---
 
 ## Plugin Development
 
-Implement the plugin interface to add new physics:
+A physics plugin is a directory under `automoose/plugins/<name>/` containing a `plugin.py` that exposes a `PLUGIN` metadata dict and a module-level `generate_input(**params)`. The registry (`plugin_registry.py`) auto-discovers it at start-up — no change to the agents, backend, MCP server, or UI:
 
 ```python
-from automoose.plugins import PhysicsPlugin, register_plugin
+# automoose/plugins/myphysics/plugin.py
 
-class MyPlugin(PhysicsPlugin):
-    name = "MyPhysics"
+PLUGIN = {
+    "label":          "My Physics",
+    "status":         "ready",          # "ready" | "stub"
+    "params":         {...},            # name -> {default, range, ...}
+    "sweepable":      ["T", "..."],     # parameters a sweep may vary
+    "executable_key": "MOOSE_EXEC",     # env var holding the solver path
+}
 
-    def generate_input(self, **params) -> str:
-        # Return a valid MOOSE .i input file as a string
-        ...
+def generate_input(**params) -> str:
+    """Return a complete MOOSE .i input file as a string."""
+    ...
 
-    def parse_results(self, csv_data: str) -> dict:
-        # Parse MOOSE CSV output, return structured dict
-        ...
-
-register_plugin(MyPlugin)
+def parse_results(csv_data) -> dict:    # optional
+    """Map MOOSE postprocessor CSV output to a metrics dict."""
+    ...
 ```
+
+### Registered plugins
+
+| Plugin | Physics domain | Status | Key parameters |
+|--------|----------------|--------|----------------|
+| `grain_growth` | Allen–Cahn grain growth | **ready** | `num_grains`, `T`, `GBenergy`, `GBmob0`, `op_num` |
+| `spinodal` | Cahn–Hilliard phase separation | **ready** | `c0`, `kappa`, `M`, `W`, `noise`, `end_time` |
+| `solidification` | dendritic solidification | stub | — |
+| `ferro` | ferroelectric (Landau–Devonshire) | stub | — |
 
 ---
 
@@ -143,11 +160,12 @@ Full documentation is available at **[automoose.readthedocs.io](https://automoos
 If you use AutoMOOSE in your research, please cite:
 
 ```bibtex
-@article{automoose2026,
-  title   = {AutoMOOSE: An LLM-Driven Agentic Framework for Automated Phase-Field Simulations},
-  author  = {[Authors]},
-  journal = {NA},
-  year    = {2026}
+@article{manna2026automoose,
+  title   = {AutoMOOSE: an agentic AI for autonomous phase-field simulation},
+  author  = {Manna, Sukriti and Chan, Henry and Sankaranarayanan, Subramanian},
+  year    = {2026},
+  eprint  = {2603.20986},
+  note    = {Preprint: arXiv:2603.20986}
 }
 ```
 

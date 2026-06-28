@@ -30,13 +30,16 @@ Agent Pipeline
        │                           ▼
        │                       MOOSE Executable
        ▼
-   f₄  Reviewer ◄──────────── (on failure: diagnose + retry → f₂)
+   f₄  Reviewer ────────────► screen: did the run complete and look valid?
        │
        ▼
    f₅  Visualization ◄─────── parse_results(csv_data)
        │
        ▼
    f₆  Skeptic ─────────────► physics-grounded falsification (verdict)
+       │
+       ▼   (falsified + recoverable)
+   recovery.py ─────────────► classify failure → bounded correction → re-run
 
 The pipeline is formally :math:`\mathcal{S} = f_6 \circ f_5 \circ f_4 \circ
 f_3 \circ f_2 \circ f_1(\mathcal{U})` and partitions into three layers:
@@ -74,9 +77,10 @@ solver log, and writes a self-contained, timestamped run directory under
 
 f₄ Reviewer
 ~~~~~~~~~~~
-On a non-zero exit, diagnoses the failure class and proposes corrected
-parameters, returning them to f₂ via the retry arc. An *operational* check:
-did the simulation run?
+Screens the completed run — an *operational* check: did the simulation reach a
+terminal state and do the metrics look physically valid? The Reviewer **does
+not repair**; correction is handled downstream by the closed-loop recovery
+module acting on the Skeptic's verdict.
 
 f₅ Visualization
 ~~~~~~~~~~~~~~~~
@@ -92,7 +96,18 @@ should we believe the result? For grain growth it tests monotonicity,
 asymptotic behavior, parabolic Burke–Turnbull scaling, numerical integrity,
 and cross-run Arrhenius consistency; for conserved Cahn–Hilliard dynamics it
 tests the exact laws of mass conservation and free-energy dissipation, plus
-coarsening. Each invariant returns a verdict and, on failure, a diagnosis.
+coarsening. Each invariant returns a verdict and, on failure, a diagnosis. The
+Skeptic falsifies but **does not repair**.
+
+Closed-loop recovery
+~~~~~~~~~~~~~~~~~~~~~~
+When the Skeptic falsifies a run for a recoverable reason (for example a
+time-step divergence), a separate module, ``recovery.py``, classifies the
+failure and applies a bounded correction — such as a time-step cutback
+:math:`\Delta t \leftarrow \alpha\,\Delta t` — and re-runs the pipeline.
+Detection (Skeptic) is deliberately kept distinct from correction (recovery):
+a corrected run is accepted only if it re-completes **and** the Skeptic
+re-admits it. All recovery actions are logged for auditability.
 
 Model-Agnostic Backend
 ----------------------
@@ -119,8 +134,11 @@ Plugin Registry
 ---------------
 
 The plugin registry decouples physics implementations from the agent pipeline.
-Each plugin exposes ``generate_input(**params) -> str`` and
-``parse_results(csv_data) -> dict``. Currently registered plugins:
+Each plugin is a directory under ``automoose/plugins/`` whose ``plugin.py``
+exposes a ``PLUGIN`` metadata dict and a module-level
+``generate_input(**params) -> str`` (with an optional
+``parse_results(csv_data) -> dict``); the registry auto-discovers it at
+start-up. Currently registered plugins:
 
 .. list-table::
    :header-rows: 1
@@ -130,10 +148,10 @@ Each plugin exposes ``generate_input(**params) -> str`` and
      - Status
      - Notes
    * - Grain Growth (Allen–Cahn)
-     - validated
+     - ready
      - Non-conserved; two formulations, 2D/3D, seven presets
    * - Spinodal (Cahn–Hilliard)
-     - validated
+     - ready
      - Conserved; CALPHAD Fe–Cr free-energy mode
    * - Ferroelectric (LGD)
      - stub
