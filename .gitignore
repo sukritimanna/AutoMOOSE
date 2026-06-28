@@ -54,3 +54,10 @@ config.env.save
 config.env*
 .jitcache/
 staging_prod/
+
+# dev scratch / run artifacts
+fecr_spinodal/
+fecr_automoose.i
+falsification_report*.json
+apply_*_patch.py
+fix_*.py

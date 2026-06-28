@@ -1,0 +1,194 @@
+{
+  "tasks": [
+    "C1",
+    "C2",
+    "C3",
+    "C4",
+    "C5",
+    "C6",
+    "C7",
+    "C8"
+  ],
+  "models": {
+    "Opus": {
+      "provider": "anthropic",
+      "model": "claude-opus-4-1-20250805",
+      "raw_G1_strict": "0/8",
+      "raw_G1_lenient": "0/8",
+      "raw_detail": {
+        "C1": {
+          "strict": false,
+          "lenient": false
+        },
+        "C2": {
+          "strict": false,
+          "lenient": false
+        },
+        "C3": {
+          "strict": false,
+          "lenient": false
+        },
+        "C4": {
+          "strict": false,
+          "lenient": false
+        },
+        "C5": {
+          "strict": false,
+          "lenient": false
+        },
+        "C6": {
+          "strict": false,
+          "lenient": false
+        },
+        "C7": {
+          "strict": false,
+          "lenient": false
+        },
+        "C8": {
+          "strict": false,
+          "lenient": false
+        }
+      }
+    },
+    "GPT5": {
+      "provider": "openai",
+      "model": "gpt-5",
+      "raw_G1_strict": "0/8",
+      "raw_G1_lenient": "0/8",
+      "raw_detail": {
+        "C1": {
+          "strict": false,
+          "lenient": false,
+          "error": "AuthenticationError: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-ant-a************************************************************************************************EAAA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}"
+        },
+        "C2": {
+          "strict": false,
+          "lenient": false,
+          "error": "AuthenticationError: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-ant-a************************************************************************************************EAAA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}"
+        },
+        "C3": {
+          "strict": false,
+          "lenient": false,
+          "error": "AuthenticationError: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-ant-a************************************************************************************************EAAA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}"
+        },
+        "C4": {
+          "strict": false,
+          "lenient": false,
+          "error": "AuthenticationError: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-ant-a************************************************************************************************EAAA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}"
+        },
+        "C5": {
+          "strict": false,
+          "lenient": false,
+          "error": "AuthenticationError: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-ant-a************************************************************************************************EAAA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}"
+        },
+        "C6": {
+          "strict": false,
+          "lenient": false,
+          "error": "AuthenticationError: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-ant-a************************************************************************************************EAAA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}"
+        },
+        "C7": {
+          "strict": false,
+          "lenient": false,
+          "error": "AuthenticationError: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-ant-a************************************************************************************************EAAA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}"
+        },
+        "C8": {
+          "strict": false,
+          "lenient": false,
+          "error": "AuthenticationError: Error code: 401 - {'error': {'message': 'Incorrect API key provided: sk-ant-a************************************************************************************************EAAA. You can find your API key at https://platform.openai.com/account/api-keys.', 'type': 'invalid_request_error', 'code': 'invalid_api_key', 'param': None}, 'status': 401}"
+        }
+      }
+    }
+  },
+  "per_task": [
+    {
+      "id": "C1",
+      "T": 450,
+      "n": 20,
+      "plugin_strict": true,
+      "plugin_lenient": true,
+      "raw_Opus_strict": false,
+      "raw_Opus_lenient": false,
+      "raw_GPT5_strict": false,
+      "raw_GPT5_lenient": false
+    },
+    {
+      "id": "C2",
+      "T": 475,
+      "n": 20,
+      "plugin_strict": true,
+      "plugin_lenient": true,
+      "raw_Opus_strict": false,
+      "raw_Opus_lenient": false,
+      "raw_GPT5_strict": false,
+      "raw_GPT5_lenient": false
+    },
+    {
+      "id": "C3",
+      "T": 500,
+      "n": 50,
+      "plugin_strict": true,
+      "plugin_lenient": true,
+      "raw_Opus_strict": false,
+      "raw_Opus_lenient": false,
+      "raw_GPT5_strict": false,
+      "raw_GPT5_lenient": false
+    },
+    {
+      "id": "C4",
+      "T": 525,
+      "n": 50,
+      "plugin_strict": true,
+      "plugin_lenient": true,
+      "raw_Opus_strict": false,
+      "raw_Opus_lenient": false,
+      "raw_GPT5_strict": false,
+      "raw_GPT5_lenient": false
+    },
+    {
+      "id": "C5",
+      "T": 550,
+      "n": 50,
+      "plugin_strict": true,
+      "plugin_lenient": true,
+      "raw_Opus_strict": false,
+      "raw_Opus_lenient": false,
+      "raw_GPT5_strict": false,
+      "raw_GPT5_lenient": false
+    },
+    {
+      "id": "C6",
+      "T": 500,
+      "n": 100,
+      "plugin_strict": true,
+      "plugin_lenient": true,
+      "raw_Opus_strict": false,
+      "raw_Opus_lenient": false,
+      "raw_GPT5_strict": false,
+      "raw_GPT5_lenient": false
+    },
+    {
+      "id": "C7",
+      "T": 450,
+      "n": 100,
+      "plugin_strict": true,
+      "plugin_lenient": true,
+      "raw_Opus_strict": false,
+      "raw_Opus_lenient": false,
+      "raw_GPT5_strict": false,
+      "raw_GPT5_lenient": false
+    },
+    {
+      "id": "C8",
+      "T": 525,
+      "n": 100,
+      "plugin_strict": true,
+      "plugin_lenient": true,
+      "raw_Opus_strict": false,
+      "raw_Opus_lenient": false,
+      "raw_GPT5_strict": false,
+      "raw_GPT5_lenient": false
+    }
+  ],
+  "plugin_G1_strict": "8/8",
+  "plugin_G1_lenient": "8/8"
+}
