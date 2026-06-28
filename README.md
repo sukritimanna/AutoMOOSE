@@ -45,7 +45,7 @@
 
 - 🧠 &nbsp;**Natural language in, simulation out** — describe the physics; AutoMOOSE writes the MOOSE `.i` file, runs it, and reports back. No manual input authoring.
 - 🔬 &nbsp;**Six-agent pipeline** with cleanly separated responsibilities — planning, input generation, execution, screening, falsification, and interpretation.
-- 🛡️ &nbsp;**Detection separated from correction** — the Skeptic falsifies against physics invariants but *never repairs*; a distinct module acts on its verdict.
+- 🛡️ &nbsp;**Detection separated from correction** — the Skeptic falsifies against physics invariants; a distinct recovery module acts on its verdict.
 - ♻️ &nbsp;**Bounded closed-loop recovery** — numerical-only corrections, capped at `MAX_ATTEMPTS = 3`, with a `{from, to, why}` record for every edit and physical parameters left untouched.
 - 🔌 &nbsp;**Plugin registry** — add a new physics domain without changing the agents, backend, MCP server, or UI.
 - 🔗 &nbsp;**Programmatic interfaces** — a Model Context Protocol (MCP) server with ten tools, a FastAPI REST API, and a React frontend.
@@ -60,11 +60,11 @@ Formally, `S = f₅ ∘ f₆ ∘ f₄ ∘ f₃ ∘ f₂ ∘ f₁(U)` — read ri
 | Architect | `f₁` | Decomposes user intent into a structured simulation plan |
 | Input Writer | `f₂` | Generates the MOOSE `.i` input file via six sub-agents |
 | Runner | `f₃` | Executes the simulation and monitors it to a terminal state |
-| Reviewer | `f₄` | **Screens** the run — *did it complete and look valid?* (does **not** repair) |
-| Skeptic | `f₆` | **Adversarially falsifies** the result against physics invariants (does **not** repair) |
+| Reviewer | `f₄` | **Screens** the run — *did it complete and look valid?* |
+| Skeptic | `f₆` | **Adversarially falsifies** the result against physics invariants |
 | Visualization | `f₅` | Extracts observables and writes a natural-language interpretation |
 
-Detection is deliberately separated from correction: the Skeptic falsifies but never repairs, and a distinct closed-loop module (`recovery.py`) acts on its verdict — classifying the failure and applying a bounded correction before re-running. Recovery is bounded in three ways: a hard cap of `MAX_ATTEMPTS = 3` per task; corrections that touch only numerical and discretization controls (the time step, floored at `MIN_DT0`; the mesh refinement; the integration window) and never the physical parameters; and a `{from, to, why}` change record for every edit. A corrected run is accepted only if it re-completes **and** the Skeptic re-admits it.
+Detection is deliberately separated from correction: the Skeptic falsifies, and a distinct closed-loop module (`recovery.py`) acts on its verdict — classifying the failure and applying a bounded correction before re-running. Recovery is bounded in three ways: a hard cap of `MAX_ATTEMPTS = 3` per task; corrections that touch only numerical and discretization controls (the time step, floored at `MIN_DT0`; the mesh refinement; the integration window) and never the physical parameters; and a `{from, to, why}` change record for every edit. A corrected run is accepted only if it re-completes **and** the Skeptic re-admits it.
 
 The scientific validation of the framework (a pre-registered grain-growth benchmark, an ensemble Arrhenius analysis, and a second conserved-dynamics domain) is reported in the companion article (see [Citation](#citation)).
 
