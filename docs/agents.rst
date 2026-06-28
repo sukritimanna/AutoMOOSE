@@ -37,8 +37,7 @@ Execution layer
 
 **Reviewer** (:math:`f_4`)
    Screens the completed run — an *operational* check: did it reach a terminal
-   state and do the metrics look physically valid? The Reviewer **does not
-   repair**; correction is handled by the closed-loop recovery module acting
+   state and do the metrics look physically valid? Correction is handled by the closed-loop recovery module acting
    on the Skeptic's verdict.
 
 Epistemic layer
@@ -57,7 +56,7 @@ Epistemic layer
    Cahn–Hilliard dynamics it tests the exact laws of mass conservation and
    free-energy dissipation, plus coarsening. Each invariant returns a verdict
    and, on failure, a diagnosis that localizes the likely cause. The Skeptic
-   falsifies but **does not repair**.
+   falsifies.
 
 Closed-loop recovery
 --------------------

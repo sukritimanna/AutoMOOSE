@@ -78,8 +78,7 @@ solver log, and writes a self-contained, timestamped run directory under
 f₄ Reviewer
 ~~~~~~~~~~~
 Screens the completed run — an *operational* check: did the simulation reach a
-terminal state and do the metrics look physically valid? The Reviewer **does
-not repair**; correction is handled downstream by the closed-loop recovery
+terminal state and do the metrics look physically valid? Correction is handled downstream by the closed-loop recovery
 module acting on the Skeptic's verdict.
 
 f₅ Visualization
@@ -97,7 +96,7 @@ asymptotic behavior, parabolic Burke–Turnbull scaling, numerical integrity,
 and cross-run Arrhenius consistency; for conserved Cahn–Hilliard dynamics it
 tests the exact laws of mass conservation and free-energy dissipation, plus
 coarsening. Each invariant returns a verdict and, on failure, a diagnosis. The
-Skeptic falsifies but **does not repair**.
+Skeptic falsifies.
 
 Closed-loop recovery
 ~~~~~~~~~~~~~~~~~~~~~~
