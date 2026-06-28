@@ -6,7 +6,7 @@ multi-agent pipeline,
 
 .. math::
 
-   \mathcal{S} = f_6 \circ f_5 \circ f_4 \circ f_3 \circ f_2 \circ f_1(\mathcal{U}),
+   \mathcal{S} = f_5 \circ f_6 \circ f_4 \circ f_3 \circ f_2 \circ f_1(\mathcal{U}),
 
 where :math:`\mathcal{U}` is the natural-language user intent and each agent
 :math:`f_i` enriches a shared simulation plan. The pipeline partitions into

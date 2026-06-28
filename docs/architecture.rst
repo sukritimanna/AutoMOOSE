@@ -41,7 +41,7 @@ Agent Pipeline
        ▼   (falsified + recoverable)
    recovery.py ─────────────► classify failure → bounded correction → re-run
 
-The pipeline is formally :math:`\mathcal{S} = f_6 \circ f_5 \circ f_4 \circ
+The pipeline is formally :math:`\mathcal{S} = f_5 \circ f_6 \circ f_4 \circ
 f_3 \circ f_2 \circ f_1(\mathcal{U})` and partitions into three layers:
 **cognitive** (f₁, f₂), **execution** (f₃, f₄), and **epistemic** (f₅, f₆) —
 reframing the workflow from software stages into the epistemic roles

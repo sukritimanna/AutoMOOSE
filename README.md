@@ -23,7 +23,7 @@
 
 **AutoMOOSE** is an agentic AI framework that automates the full lifecycle of [MOOSE](https://mooseframework.inl.gov/) phase-field simulations — from a natural-language problem specification through mesh and input-file construction, job execution, screening, **physics-grounded falsification**, closed-loop recovery, and visualization.
 
-The framework is a **six-agent pipeline**, formally `S = f₆ ∘ f₅ ∘ f₄ ∘ f₃ ∘ f₂ ∘ f₁(U)`:
+The framework is a **six-agent pipeline**, formally `S = f₅ ∘ f₆ ∘ f₄ ∘ f₃ ∘ f₂ ∘ f₁(U)`:
 
 | Agent | Symbol | Role |
 |-------|--------|------|
