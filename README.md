@@ -34,9 +34,9 @@ The framework is a **six-agent pipeline**, formally `S = f₅ ∘ f₆ ∘ f₄ 
 | Visualization | f₅ | Extracts observables and writes a natural-language interpretation |
 | Skeptic | f₆ | **Adversarially falsifies** the result against physics invariants (does **not** repair) |
 
-Detection is deliberately separated from correction: the Skeptic falsifies but never repairs, and a distinct closed-loop module (`recovery.py`) acts on its verdict — classifying the failure and applying a bounded correction (e.g. a time-step cutback `Δt ← α·Δt`) before re-running. A corrected run is accepted only if it re-completes **and** the Skeptic re-admits it.
+Detection is deliberately separated from correction: the Skeptic falsifies but never repairs, and a distinct closed-loop module (`recovery.py`) acts on its verdict — classifying the failure and applying a bounded correction before re-running. Recovery is bounded in three ways: a hard cap of `MAX_ATTEMPTS = 3` per task; corrections that touch only numerical and discretisation controls (the time step, floored at `MIN_DT0`; the mesh refinement; the integration window) and never the physical parameters; and a `{from, to, why}` change record for every edit. A corrected run is accepted only if it re-completes **and** the Skeptic re-admits it.
 
-A **plugin registry** decouples physics from the agents via a small `PLUGIN` dict + `generate_input(**params) -> str` contract (see below). The backend exposes a **Model Context Protocol (MCP)** server (Starlette/uvicorn, port 8001, stdio + SSE) with ten tools, backed by a FastAPI REST API (port 8000) and a Vite/React frontend.
+A **plugin registry** decouples physics from the agents via a small `PLUGIN` dict + `generate_input(**params) -> str` contract (see below). The backend exposes a **Model Context Protocol (MCP)** server (Starlette/uvicorn, port 8001, stdio + SSE) with ten tools, backed by a FastAPI REST API (port 8000) and a Vite/React frontend (port 5173).
 
 The scientific validation of the framework (a pre-registered grain-growth benchmark, an ensemble Arrhenius analysis, and a second conserved-dynamics domain) is reported in the companion article (see [Citation](#citation)).
 
