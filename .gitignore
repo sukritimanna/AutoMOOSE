@@ -61,3 +61,24 @@ fecr_automoose.i
 falsification_report*.json
 apply_*_patch.py
 fix_*.py
+
+# ---- local scratch, patches, and secrets (not for the repo) ----
+config.env
+config.env.save
+.smoke_*/
+*.patch
+smoke_test.sh
+analyze_spinodal.py
+ablation_w5.py
+capture_backends.py
+stage_inputs.py
+apply_*_patch.py
+fix_*.py
+falsification_report*.json
+fecr_automoose.i
+fecr_spinodal
+files.zip
+runs/
+staging/
+staging_prod/
+validation/
