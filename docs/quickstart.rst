@@ -62,7 +62,7 @@ for batch benchmarks and HPC sweeps:
 .. code-block:: bash
 
    python -m automoose.agents.orchestrator --physics grain_growth \
-       --params '{"T":800,"n_grains":50}'
+       --params '{"T":800,"num_grains":50}'
 
 Choosing where it runs
 ----------------------

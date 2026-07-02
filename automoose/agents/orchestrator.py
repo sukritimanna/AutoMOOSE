@@ -16,7 +16,7 @@ Pipeline:
 
 Usage:
     python -m automoose.agents.orchestrator --physics grain_growth \
-        --params '{"T": 800, "n_grains": 50}' --backend-name "Qwen2.5-32B"
+        --params '{"T": 800, "num_grains": 50}' --backend-name "Qwen2.5-32B"
 
 Reads BACKEND_URL (default http://localhost:8000) for the AutoMOOSE backend, and
 the usual LLM_* env vars for the model. Emits one JSON capability row to stdout.
@@ -112,7 +112,8 @@ def f6_skeptic(run_id: str, physics: str, params: dict) -> dict:
     task_dir = rec.get("run_dir")
     if not task_dir:
         return {"credible": None, "skeptic_error": "run_dir not in run record"}
-    n0 = params.get("n_grains") or params.get("grain_num") or params.get("N0")
+    n0 = (params.get("num_grains") or params.get("n_grains")
+          or params.get("grain_num") or params.get("N0"))
     try:
         if physics == "spinodal":
             verdict = skeptic.falsify(task_dir, physics="spinodal")
@@ -276,7 +277,7 @@ def _finish(row: dict, t0: float) -> dict:
 def main():
     ap = argparse.ArgumentParser(description="AutoMOOSE headless orchestrator (W7b)")
     ap.add_argument("--physics", default="grain_growth")
-    ap.add_argument("--params", default='{"T": 800, "n_grains": 50}')
+    ap.add_argument("--params", default='{"T": 800, "num_grains": 50}')
     ap.add_argument("--backend-name", default=os.environ.get("LLM_MODEL", "model"))
     a = ap.parse_args()
     row = orchestrate(a.physics, json.loads(a.params), a.backend_name)

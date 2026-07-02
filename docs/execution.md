@@ -53,7 +53,7 @@ uvicorn automoose.server:app --host 127.0.0.1 --port 8000
 
 # in another terminal, drive the pipeline:
 python -m automoose.agents.orchestrator --physics grain_growth \
-    --params '{"T":800,"n_grains":50}'
+    --params '{"T":800,"num_grains":50}'
 ```
 
 Results land in `./runs/<run_dir>/` with the CSV, log, and provenance JSON.

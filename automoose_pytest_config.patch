@@ -1,0 +1,12 @@
+diff --git a/pyproject.toml b/pyproject.toml
+index 9c65293..5e04b0e 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -16,3 +16,7 @@ include = ["automoose*"]
+ 
+ [tool.setuptools.dynamic]
+ dependencies = { file = ["requirements.txt"] }
++
++[tool.pytest.ini_options]
++testpaths = ["tests"]
++addopts = "-q --import-mode=importlib"

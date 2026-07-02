@@ -1,0 +1,46 @@
+{
+  "backend": "claude-sonnet-4-6",
+  "model": "claude-sonnet-4-6",
+  "provider": "anthropic",
+  "physics": "grain_growth",
+  "params": {
+    "dim": 2,
+    "nx": 8,
+    "ny": 8,
+    "uniform_refine": 0,
+    "num_grains": 4,
+    "op_num": 4,
+    "xmax": 200,
+    "ymax": 200,
+    "time_mode": "num_steps",
+    "num_steps": 6,
+    "rand_seed": 42,
+    "T": 450
+  },
+  "architect_note": "Grid resolution of 8\u00d78 with zero refinement is extremely coarse for resolving grain boundary interfaces across a 200\u00d7200 domain with 4 grains.",
+  "input_ok": true,
+  "input_lines": 150,
+  "run_id": "run_20260702_135052_877",
+  "completed": true,
+  "run_status": "done",
+  "wall_s": 33.1,
+  "review": "The run is **not physically valid**: zero grain reduction and a parabolic growth constant of zero indicate no grain growth occurred, despite a spuriously perfect R\u00b2 fit.",
+  "valid": true,
+  "metrics": {
+    "grains_initial": 4.0,
+    "grains_final": 4.0,
+    "grain_reduction_pct": 0.0,
+    "dt_final": 33.275,
+    "total_timesteps": 7,
+    "final_time": 174.3,
+    "parabolic_R2": 1.0,
+    "parabolic_k": 0.0,
+    "dofs_final": 70049.0
+  },
+  "credible": false,
+  "falsified_by": [
+    "T3_parabolic"
+  ],
+  "skeptic_diagnosis": "ran and coarsened but violates parabolic (Burke-Turnbull) scaling: the integration window may be too short for the asymptotic regime, or the kinetics are anomalous. Remediation: extend end_time and refit.",
+  "total_wall_s": 38.0
+}

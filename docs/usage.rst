@@ -39,7 +39,7 @@ Beyond the web UI, the full pipeline can be run from the command line:
 .. code-block:: bash
 
    python -m automoose.agents.orchestrator --physics grain_growth \
-       --params '{"T":800,"n_grains":50}'
+       --params '{"T":800,"num_grains":50}'
 
 Each completed run is automatically verified by the Skeptic agent (f₆), which
 reports a credibility verdict alongside the extracted metrics.
