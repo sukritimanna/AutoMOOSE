@@ -38,6 +38,7 @@ physics-grounded falsification, closed-loop recovery, and visualization.
    :caption: Usage
 
    usage
+   execution
    examples
 
 .. toctree::
